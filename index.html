@@ -224,6 +224,7 @@ html,body{width:100%;height:100%;background:#000;color:#fff;font-family:'Share T
 
 <script>
 'use strict';
+const IS_MOBILE = navigator.maxTouchPoints > 0;
 
 // ═══════════════════════════════════════════════════
 // COSTANTI
@@ -664,7 +665,7 @@ function drawMenu() {
     // sub
     CTX.font=FM(Math.min(W*.014,12));
     CTX.fillStyle='#252525';
-    CTX.fillText('ARI TORINO · COMICS 2025', W/2, H*0.12+titleSz*0.9);
+    CTX.fillText('ARI TORINO · COMICS 2026', W/2, H*0.12+titleSz*0.9);
     // player
     CTX.font=F(Math.min(W*.02,16),700);
     CTX.fillStyle='#FFE600';
@@ -1462,7 +1463,7 @@ openReg();
 function mobileReplay() {
   if (currentScreen === 'rx') procRX('/');
 }
-document.getElementById('kbd-replay').addEventListener('pointerdown', e => {
+document.getElementById('mob-replay-btn').addEventListener('pointerdown', e => {
   e.preventDefault();
   mobileReplay();
 });
@@ -1483,8 +1484,6 @@ function procRX(ch) {
   if (inputFn) inputFn(ch, 'kbd');
 }
 
-// ══ MOBILE ══
-const IS_MOBILE = navigator.maxTouchPoints > 0;
 
 function mobShowInput(show, withReplay) {
   if (!IS_MOBILE) return;
