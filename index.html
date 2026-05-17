@@ -38,6 +38,7 @@ html,body{width:100%;height:100%;background:#000;color:#fff;font-family:'Share T
 .ctxt{font-size:.62rem;color:#2e2e2e;line-height:1.52;}
 .fbtn{font-family:Orbitron,monospace;font-weight:700;font-size:clamp(.8rem,1.6vw,1.1rem);letter-spacing:.17em;padding:12px 0;border:2px solid var(--g);background:transparent;color:var(--g);cursor:pointer;width:min(480px,88vw);transition:all .12s;margin-top:4px;}
 .fbtn:hover{background:var(--g);color:#000;}
+.fbtn { -webkit-tap-highlight-color: rgba(0,255,65,.3); touch-action: manipulation; }
 .fbtn.red{border-color:var(--r);color:var(--r);} .fbtn.red:hover{background:var(--r);color:#000;}
 .fbtn.grey{border-color:#333;color:#555;} .fbtn.grey:hover{background:#222;color:#aaa;}
 .fbtn.yel{border-color:var(--y);color:var(--y);} .fbtn.yel:hover{background:var(--y);color:#000;}
@@ -489,6 +490,7 @@ document.getElementById('crow').addEventListener('click',()=>{
 });
 
 document.getElementById('go-btn').addEventListener('click', doReg);
+document.getElementById('go-btn').addEventListener('touchend', e => { e.preventDefault(); doReg(); });
 document.getElementById('rname').addEventListener('keydown',e=>{if(e.key==='Enter') document.getElementById('remail').focus();});
 document.getElementById('remail').addEventListener('keydown',e=>{if(e.key==='Enter') doReg();});
 
