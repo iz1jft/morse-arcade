@@ -64,66 +64,58 @@ html,body{width:100%;height:100%;background:#000;color:#fff;font-family:'Share T
 #serial-st.err{color:var(--r);}
 .reg-logo{position:absolute;top:14px;right:18px;width:76px;opacity:.75;pointer-events:none;}
 
-/* ── MOBILE KEYBOARD ── */
-#mob-kbd {
+/* mobile: input field only */
+
+/* ── MOBILE INPUT ── */
+#mob-input-wrap {
   display: none;
   position: fixed;
   bottom: 0; left: 0; right: 0;
-  background: rgba(0,0,0,.92);
+  background: rgba(0,0,0,.95);
   border-top: 1px solid #1a1a1a;
-  padding: 8px 6px 12px;
+  padding: 10px 12px 16px;
   z-index: 500;
-  flex-direction: column;
-  gap: 6px;
+  gap: 8px;
+  align-items: center;
 }
-#mob-kbd.visible { display: flex; }
+#mob-input-wrap.visible { display: flex; }
 
-.kbd-row {
-  display: flex;
-  justify-content: center;
-  gap: 5px;
-}
-
-.kbd-key {
+#mob-input {
+  flex: 1;
   font-family: Orbitron, monospace;
+  font-size: 1.4rem;
   font-weight: 700;
-  font-size: clamp(.75rem, 3vw, 1rem);
-  color: #00FF41;
   background: #080808;
-  border: 1px solid #1e1e1e;
+  border: 2px solid #00FFFF;
+  color: #00FF41;
+  padding: 10px 16px;
+  text-align: center;
+  letter-spacing: .2em;
+  outline: none;
+  text-transform: uppercase;
   border-radius: 4px;
-  width: clamp(28px, 8vw, 42px);
-  height: clamp(28px, 8vw, 42px);
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  transition: background .08s, border-color .08s;
-  user-select: none;
 }
-.kbd-key:active { background: #00FF41; color: #000; border-color: #00FF41; }
 
-/* tasto speciale RIASCOLTA per RX */
-.kbd-replay {
+#mob-replay-btn {
   font-family: Orbitron, monospace;
-  font-size: clamp(.65rem, 2.5vw, .85rem);
-  color: var(--y);
+  font-size: .75rem;
+  color: var(--y, #FFE600);
   background: #0a0800;
   border: 1px solid #3a2a00;
   border-radius: 4px;
-  padding: 0 12px;
-  height: clamp(28px, 8vw, 42px);
-  display: flex; align-items: center; justify-content: center;
+  padding: 10px 14px;
   cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
+  display: none;
 }
-.kbd-replay:active { background: var(--y); color: #000; }
+#mob-replay-btn.visible { display: block; }
 
-/* frecce menu mobile */
+/* menu: frecce touch */
 #mob-nav {
   display: none;
   position: fixed;
   bottom: 0; left: 0; right: 0;
-  background: rgba(0,0,0,.92);
+  background: rgba(0,0,0,.95);
   border-top: 1px solid #1a1a1a;
   padding: 10px;
   z-index: 500;
@@ -135,23 +127,23 @@ html,body{width:100%;height:100%;background:#000;color:#fff;font-family:'Share T
 .nav-btn {
   font-family: Orbitron, monospace;
   font-weight: 700;
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   color: #00FF41;
   background: #080808;
-  border: 1px solid #1e1e1e;
+  border: 2px solid #1e1e1e;
   border-radius: 6px;
-  padding: 12px 28px;
+  padding: 14px 0;
   cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  flex: 1; max-width: 120px;
-  display: flex; align-items: center; justify-content: center;
+  flex: 1;
+  max-width: 130px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
 }
-.nav-btn:active { background: #00FF41; color: #000; }
+.nav-btn:active { background: #00FF41; color: #000; border-color: #00FF41; }
 .nav-btn.enter  { border-color: #00FFFF; color: #00FFFF; }
 .nav-btn.enter:active { background: #00FFFF; color: #000; }
-
-/* su mobile il canvas non deve essere coperto dalla tastiera */
-.kbd-spacer { height: 0px; transition: height .15s; }
 </style>
 </head>
 <body>
@@ -591,26 +583,28 @@ let currentScreen='';
 function goScreen(name) {
   currentScreen=name;
   closeSettings();
-  // Nascondi tutto mobile UI prima
-  showKbd(false);
-  showNav(false);
+  mobShowInput(false);
+  mobShowNav(false);
   switch(name) {
     case 'menu':
       drawMenu();
-      showNav(true);
+      mobShowNav(true);
       break;
     case 'tx':
       startTX();
+      mobShowInput(true, false);
       break;
     case 'rx':
       startRX();
-      showKbd(true, true);
+      mobShowInput(true, true);
       break;
     case 'invaders':
       startINV();
+      mobShowInput(true, false);
       break;
     case 'echo':
       startEcho();
+      mobShowInput(true, false);
       break;
     case 'board':
       drawBoard();
@@ -1355,7 +1349,7 @@ function animateBonus(baseScore, finalScore, bonus, co, tot, cb) {
   }, null);
 }
 function showGO(title, msg) {
-  showKbd(false); showNav(false);
+  mobShowInput(false); mobShowNav(false);
   // su mobile: tap su canvas per continuare
   if (IS_MOBILE) {
     CV.addEventListener('touchstart', function handler(e) {
@@ -1455,45 +1449,11 @@ if(!('serial' in navigator)) {
 openReg();
 
 
-// ══ MOBILE SUPPORT ══
-const IS_MOBILE = navigator.maxTouchPoints > 0;
 
-function showKbd(show, withReplay) {
-  const kbd = document.getElementById('mob-kbd');
-  if (!IS_MOBILE) return;
-  kbd.classList.toggle('visible', show);
-  document.getElementById('kbd-replay').style.display =
-    (show && withReplay) ? 'flex' : 'none';
-}
-
-function showNav(show) {
-  const nav = document.getElementById('mob-nav');
-  if (!IS_MOBILE) return;
-  nav.classList.toggle('visible', show);
-}
-
-// Tasti QWERTY → inputFn
-// Funzione globale per input da tastiera mobile
-function mobileKey(ch) {
-  if (AC.state === 'suspended') AC.resume();
-  const scr = currentScreen;
-  if (scr === 'rx')       { procRX(ch); return; }
-  if (scr === 'tx')       { if(inputFn) inputFn(ch,'kbd'); return; }
-  if (scr === 'invaders') { if(inputFn) inputFn(ch,'kbd'); return; }
-  if (scr === 'echo')     { if(inputFn) inputFn(ch,'kbd'); return; }
-  if (scr === 'board' || scr === 'gameover') { goScreen('menu'); return; }
-}
-
+});
 function mobileReplay() {
   if (currentScreen === 'rx') procRX('/');
 }
-
-document.querySelectorAll('.kbd-key').forEach(btn => {
-  btn.addEventListener('pointerdown', e => {
-    e.preventDefault();
-    mobileKey(btn.dataset.k);
-  });
-});
 document.getElementById('kbd-replay').addEventListener('pointerdown', e => {
   e.preventDefault();
   mobileReplay();
@@ -1508,34 +1468,75 @@ document.getElementById('nav-ok').addEventListener('pointerdown', e => {
   e.preventDefault(); menuExec();
 });
 
+
+
+// Wrapper globale per RX (usato dal mobile input)
+function procRX(ch) {
+  if (inputFn) inputFn(ch, 'kbd');
+}
+
+// ══ MOBILE ══
+const IS_MOBILE = navigator.maxTouchPoints > 0;
+
+function mobShowInput(show, withReplay) {
+  if (!IS_MOBILE) return;
+  const wrap = document.getElementById('mob-input-wrap');
+  wrap.classList.toggle('visible', show);
+  document.getElementById('mob-replay-btn').classList.toggle('visible', show && withReplay);
+  if (show) {
+    const inp = document.getElementById('mob-input');
+    inp.value = '';
+    setTimeout(() => inp.focus(), 100);
+  }
+}
+
+function mobShowNav(show) {
+  if (!IS_MOBILE) return;
+  document.getElementById('mob-nav').classList.toggle('visible', show);
+}
+
+// Input: ogni volta che digita una lettera la processa
+document.getElementById('mob-input').addEventListener('input', e => {
+  const val = e.target.value.trim().toUpperCase();
+  if (!val || !/[A-Z]/.test(val)) { e.target.value = ''; return; }
+  const ch = val[val.length - 1]; // ultima lettera digitata
+  e.target.value = '';
+  if (AC.state === 'suspended') AC.resume();
+  const scr = currentScreen;
+  if (scr === 'rx')       procRX(ch);
+  else if (scr === 'tx')       { if(inputFn) inputFn(ch,'kbd'); }
+  else if (scr === 'invaders') { if(inputFn) inputFn(ch,'kbd'); }
+  else if (scr === 'echo')     { if(inputFn) inputFn(ch,'kbd'); }
+});
+
+// Riascolta
+document.getElementById('mob-replay-btn').addEventListener('click', e => {
+  e.preventDefault();
+  if (currentScreen === 'rx') procRX('/');
+});
+
+// Nav menu
+document.getElementById('nav-up').addEventListener('click', e => { e.preventDefault(); menuNav(-1); });
+document.getElementById('nav-dn').addEventListener('click', e => { e.preventDefault(); menuNav(1); });
+document.getElementById('nav-ok').addEventListener('click', e => { e.preventDefault(); menuExec(); });
+
 </script>
 
-<!-- ══ MOBILE KEYBOARD ══ -->
-<div id="mob-kbd">
-  <div class="kbd-row">
-    <div class="kbd-key" data-k="Q">Q</div><div class="kbd-key" data-k="W">W</div>
-    <div class="kbd-key" data-k="E">E</div><div class="kbd-key" data-k="R">R</div>
-    <div class="kbd-key" data-k="T">T</div><div class="kbd-key" data-k="Y">Y</div>
-    <div class="kbd-key" data-k="U">U</div><div class="kbd-key" data-k="I">I</div>
-    <div class="kbd-key" data-k="O">O</div><div class="kbd-key" data-k="P">P</div>
-  </div>
-  <div class="kbd-row">
-    <div class="kbd-key" data-k="A">A</div><div class="kbd-key" data-k="S">S</div>
-    <div class="kbd-key" data-k="D">D</div><div class="kbd-key" data-k="F">F</div>
-    <div class="kbd-key" data-k="G">G</div><div class="kbd-key" data-k="H">H</div>
-    <div class="kbd-key" data-k="J">J</div><div class="kbd-key" data-k="K">K</div>
-    <div class="kbd-key" data-k="L">L</div>
-  </div>
-  <div class="kbd-row">
-    <div class="kbd-key" data-k="Z">Z</div><div class="kbd-key" data-k="X">X</div>
-    <div class="kbd-key" data-k="C">C</div><div class="kbd-key" data-k="V">V</div>
-    <div class="kbd-key" data-k="B">B</div><div class="kbd-key" data-k="N">N</div>
-    <div class="kbd-key" data-k="M">M</div>
-    <div class="kbd-replay" id="kbd-replay" style="display:none">↺ RIASCOLTA</div>
-  </div>
+
+  <div class="nav-btn enter" id="nav-ok">OK</div>
+  <div class="nav-btn" id="nav-dn">▼</div>
 </div>
 
-<!-- ══ MOBILE NAV (menu) ══ -->
+
+<!-- ══ MOBILE INPUT ══ -->
+<div id="mob-input-wrap">
+  <input id="mob-input" type="text" maxlength="1"
+         autocomplete="off" autocorrect="off" autocapitalize="characters"
+         spellcheck="false" placeholder="?">
+  <div id="mob-replay-btn">↺</div>
+</div>
+
+<!-- ══ MOBILE NAV ══ -->
 <div id="mob-nav">
   <div class="nav-btn" id="nav-up">▲</div>
   <div class="nav-btn enter" id="nav-ok">OK</div>
