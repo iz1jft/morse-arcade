@@ -63,6 +63,95 @@ html,body{width:100%;height:100%;background:#000;color:#fff;font-family:'Share T
 #serial-st.ok{color:var(--g);text-shadow:0 0 5px var(--g);}
 #serial-st.err{color:var(--r);}
 .reg-logo{position:absolute;top:14px;right:18px;width:76px;opacity:.75;pointer-events:none;}
+
+/* ── MOBILE KEYBOARD ── */
+#mob-kbd {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: rgba(0,0,0,.92);
+  border-top: 1px solid #1a1a1a;
+  padding: 8px 6px 12px;
+  z-index: 500;
+  flex-direction: column;
+  gap: 6px;
+}
+#mob-kbd.visible { display: flex; }
+
+.kbd-row {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+}
+
+.kbd-key {
+  font-family: Orbitron, monospace;
+  font-weight: 700;
+  font-size: clamp(.75rem, 3vw, 1rem);
+  color: #00FF41;
+  background: #080808;
+  border: 1px solid #1e1e1e;
+  border-radius: 4px;
+  width: clamp(28px, 8vw, 42px);
+  height: clamp(28px, 8vw, 42px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background .08s, border-color .08s;
+  user-select: none;
+}
+.kbd-key:active { background: #00FF41; color: #000; border-color: #00FF41; }
+
+/* tasto speciale RIASCOLTA per RX */
+.kbd-replay {
+  font-family: Orbitron, monospace;
+  font-size: clamp(.65rem, 2.5vw, .85rem);
+  color: var(--y);
+  background: #0a0800;
+  border: 1px solid #3a2a00;
+  border-radius: 4px;
+  padding: 0 12px;
+  height: clamp(28px, 8vw, 42px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.kbd-replay:active { background: var(--y); color: #000; }
+
+/* frecce menu mobile */
+#mob-nav {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: rgba(0,0,0,.92);
+  border-top: 1px solid #1a1a1a;
+  padding: 10px;
+  z-index: 500;
+  gap: 10px;
+  justify-content: center;
+}
+#mob-nav.visible { display: flex; }
+
+.nav-btn {
+  font-family: Orbitron, monospace;
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: #00FF41;
+  background: #080808;
+  border: 1px solid #1e1e1e;
+  border-radius: 6px;
+  padding: 12px 28px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  flex: 1; max-width: 120px;
+  display: flex; align-items: center; justify-content: center;
+}
+.nav-btn:active { background: #00FF41; color: #000; }
+.nav-btn.enter  { border-color: #00FFFF; color: #00FFFF; }
+.nav-btn.enter:active { background: #00FFFF; color: #000; }
+
+/* su mobile il canvas non deve essere coperto dalla tastiera */
+.kbd-spacer { height: 0px; transition: height .15s; }
 </style>
 </head>
 <body>
@@ -489,18 +578,39 @@ let currentScreen='';
 
 function goScreen(name) {
   currentScreen=name;
-  // chiudi sempre i pannelli HTML
   closeSettings();
-  // non chiudere reg — la gestisce openReg/closeReg
+  // Nascondi tutto mobile UI prima
+  showKbd(false);
+  showNav(false);
   switch(name) {
-    case 'menu':     drawMenu();    break;
-    case 'tx':       startTX();    break;
-    case 'rx':       startRX();    break;
-    case 'invaders': startINV();   break;
-    case 'echo':     startEcho();  break;
-    case 'board':    drawBoard();  break;
-    case 'gameover': break; // gestito da showGO
-    case 'reg':      openReg();    break;
+    case 'menu':
+      drawMenu();
+      showNav(true);
+      break;
+    case 'tx':
+      startTX();
+      showKbd(true, false);
+      break;
+    case 'rx':
+      startRX();
+      showKbd(true, true);
+      break;
+    case 'invaders':
+      startINV();
+      showKbd(true, false);
+      break;
+    case 'echo':
+      startEcho();
+      showKbd(true, false);
+      break;
+    case 'board':
+      drawBoard();
+      break;
+    case 'gameover':
+      break;
+    case 'reg':
+      openReg();
+      break;
   }
 }
 
@@ -1150,7 +1260,14 @@ function drawBoard() {
     CTX.font=FM(Math.min(W*.013,11));
     CTX.fillStyle='#141414'; CTX.textBaseline='bottom'; CTX.textAlign='center';
     CTX.fillText('— QUALSIASI TASTO PER USCIRE —', W/2, H-12);
-  }, ()=>goScreen('menu'));
+  }, IS_MOBILE ? ()=>{} : ()=>goScreen('menu'));
+  if (IS_MOBILE) {
+    CV.addEventListener('touchstart', function handler(e) {
+      e.preventDefault();
+      CV.removeEventListener('touchstart', handler);
+      goScreen('menu');
+    }, { passive: false, once: true });
+  }
 }
 
 // ═══════════════════════════════════════════════════
@@ -1229,6 +1346,15 @@ function animateBonus(baseScore, finalScore, bonus, co, tot, cb) {
   }, null);
 }
 function showGO(title, msg) {
+  showKbd(false); showNav(false);
+  // su mobile: tap su canvas per continuare
+  if (IS_MOBILE) {
+    CV.addEventListener('touchstart', function handler(e) {
+      e.preventDefault();
+      CV.removeEventListener('touchstart', handler);
+      goScreen('menu');
+    }, { passive: false, once: true });
+  }
   setScreen(()=>{
     cls();
     CTX.textAlign='center'; CTX.textBaseline='middle';
@@ -1319,6 +1445,83 @@ if(!('serial' in navigator)) {
 
 openReg();
 
+
+// ══ MOBILE SUPPORT ══
+const IS_MOBILE = navigator.maxTouchPoints > 0;
+
+function showKbd(show, withReplay) {
+  const kbd = document.getElementById('mob-kbd');
+  if (!IS_MOBILE) return;
+  kbd.classList.toggle('visible', show);
+  document.getElementById('kbd-replay').style.display =
+    (show && withReplay) ? 'flex' : 'none';
+}
+
+function showNav(show) {
+  const nav = document.getElementById('mob-nav');
+  if (!IS_MOBILE) return;
+  nav.classList.toggle('visible', show);
+}
+
+// Tasti QWERTY → inputFn
+document.querySelectorAll('.kbd-key').forEach(btn => {
+  btn.addEventListener('touchstart', e => {
+    e.preventDefault();
+    const ch = btn.dataset.k;
+    if (inputFn) inputFn(ch, 'kbd');
+  }, { passive: false });
+});
+
+// Riascolta
+document.getElementById('kbd-replay').addEventListener('touchstart', e => {
+  e.preventDefault();
+  if (inputFn) inputFn('/', 'kbd');
+}, { passive: false });
+
+// Nav menu
+document.getElementById('nav-up').addEventListener('touchstart', e => {
+  e.preventDefault(); menuNav(-1);
+}, { passive: false });
+document.getElementById('nav-dn').addEventListener('touchstart', e => {
+  e.preventDefault(); menuNav(1);
+}, { passive: false });
+document.getElementById('nav-ok').addEventListener('touchstart', e => {
+  e.preventDefault(); menuExec();
+}, { passive: false });
+
 </script>
+
+<!-- ══ MOBILE KEYBOARD ══ -->
+<div id="mob-kbd">
+  <div class="kbd-row">
+    <div class="kbd-key" data-k="Q">Q</div><div class="kbd-key" data-k="W">W</div>
+    <div class="kbd-key" data-k="E">E</div><div class="kbd-key" data-k="R">R</div>
+    <div class="kbd-key" data-k="T">T</div><div class="kbd-key" data-k="Y">Y</div>
+    <div class="kbd-key" data-k="U">U</div><div class="kbd-key" data-k="I">I</div>
+    <div class="kbd-key" data-k="O">O</div><div class="kbd-key" data-k="P">P</div>
+  </div>
+  <div class="kbd-row">
+    <div class="kbd-key" data-k="A">A</div><div class="kbd-key" data-k="S">S</div>
+    <div class="kbd-key" data-k="D">D</div><div class="kbd-key" data-k="F">F</div>
+    <div class="kbd-key" data-k="G">G</div><div class="kbd-key" data-k="H">H</div>
+    <div class="kbd-key" data-k="J">J</div><div class="kbd-key" data-k="K">K</div>
+    <div class="kbd-key" data-k="L">L</div>
+  </div>
+  <div class="kbd-row">
+    <div class="kbd-key" data-k="Z">Z</div><div class="kbd-key" data-k="X">X</div>
+    <div class="kbd-key" data-k="C">C</div><div class="kbd-key" data-k="V">V</div>
+    <div class="kbd-key" data-k="B">B</div><div class="kbd-key" data-k="N">N</div>
+    <div class="kbd-key" data-k="M">M</div>
+    <div class="kbd-replay" id="kbd-replay" style="display:none">↺ RIASCOLTA</div>
+  </div>
+</div>
+
+<!-- ══ MOBILE NAV (menu) ══ -->
+<div id="mob-nav">
+  <div class="nav-btn" id="nav-up">▲</div>
+  <div class="nav-btn enter" id="nav-ok">OK</div>
+  <div class="nav-btn" id="nav-dn">▼</div>
+</div>
+
 </body>
 </html>
