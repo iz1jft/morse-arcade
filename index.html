@@ -13,7 +13,7 @@ html,body{width:100%;height:100%;background:#000;color:#fff;font-family:'Share T
 #sl{position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.12) 2px,rgba(0,0,0,.12) 4px);pointer-events:none;z-index:50;}
 
 /* tutte le schermate sono canvas fullscreen, gestite via JS */
-#main-canvas{position:fixed;top:0;left:0;width:100%;height:100%;display:block;z-index:1;}
+#main-canvas{position:fixed;top:0;left:0;width:100%;height:100%;display:block;z-index:1;pointer-events:none;}
 
 /* solo la registrazione e il pannello settings sono HTML */
 #reg,#settings,#adm{
@@ -524,7 +524,7 @@ function doReg() {
 }
 
 function openReg() {
-  document.getElementById('main-canvas').style.pointerEvents = 'none';
+  
   // reset
   curPlayer=''; curEmail='';
   document.getElementById('rname').value='';
@@ -538,7 +538,7 @@ function openReg() {
 
 function closeReg() {
   document.getElementById('reg').classList.remove('show');
-  document.getElementById('main-canvas').style.pointerEvents = 'auto';
+  
 }
 
 // ═══════════════════════════════════════════════════
@@ -1277,11 +1277,10 @@ function drawBoard() {
     CTX.fillText('— QUALSIASI TASTO PER USCIRE —', W/2, H-12);
   }, IS_MOBILE ? ()=>{} : ()=>goScreen('menu'));
   if (IS_MOBILE) {
-    CV.addEventListener('touchstart', function handler(e) {
-      e.preventDefault();
-      CV.removeEventListener('touchstart', handler);
+    document.addEventListener('pointerdown', function handler(e) {
+      document.removeEventListener('pointerdown', handler);
       goScreen('menu');
-    }, { passive: false, once: true });
+    }, { once: true });
   }
 }
 
@@ -1364,11 +1363,10 @@ function showGO(title, msg) {
   mobShowInput(false); mobShowNav(false);
   // su mobile: tap su canvas per continuare
   if (IS_MOBILE) {
-    CV.addEventListener('touchstart', function handler(e) {
-      e.preventDefault();
-      CV.removeEventListener('touchstart', handler);
+    document.addEventListener('pointerdown', function handler(e) {
+      document.removeEventListener('pointerdown', handler);
       goScreen('menu');
-    }, { passive: false, once: true });
+    }, { once: true });
   }
   setScreen(()=>{
     cls();
