@@ -505,8 +505,20 @@ function doReg() {
   if(!name){document.getElementById('rname').focus();return;}
   curPlayer=name.toUpperCase();
   curEmail=document.getElementById('remail').value.trim().toLowerCase();
+  // Mostra schermata nera per 2 secondi prima del menu
+  // evita che l'invio lanci accidentalmente il primo gioco
   closeReg();
-  goScreen('menu');
+  setScreen(()=>{
+    cls();
+    CTX.textAlign='center'; CTX.textBaseline='middle';
+    CTX.font=F(Math.min(W*.028,22),700);
+    CTX.fillStyle='#00FFFF';
+    CTX.fillText('BENVENUTO ' + curPlayer + '!', W/2, H/2);
+    CTX.font=F(Math.min(W*.018,14),400);
+    CTX.fillStyle='#1a1a1a';
+    CTX.fillText('preparati...', W/2, H/2 + 50);
+  }, null);
+  setTimeout(()=>goScreen('menu'), 2000);
 }
 
 function openReg() {
@@ -589,7 +601,6 @@ function goScreen(name) {
       break;
     case 'tx':
       startTX();
-      showKbd(true, false);
       break;
     case 'rx':
       startRX();
@@ -597,11 +608,9 @@ function goScreen(name) {
       break;
     case 'invaders':
       startINV();
-      showKbd(true, false);
       break;
     case 'echo':
       startEcho();
-      showKbd(true, false);
       break;
     case 'board':
       drawBoard();
@@ -1465,29 +1474,25 @@ function showNav(show) {
 
 // Tasti QWERTY → inputFn
 document.querySelectorAll('.kbd-key').forEach(btn => {
-  btn.addEventListener('touchstart', e => {
+  btn.addEventListener('pointerdown', e => {
     e.preventDefault();
-    const ch = btn.dataset.k;
-    if (inputFn) inputFn(ch, 'kbd');
-  }, { passive: false });
+    if (AC.state === 'suspended') AC.resume();
+    if (inputFn) inputFn(btn.dataset.k, 'kbd');
+  });
 });
-
-// Riascolta
-document.getElementById('kbd-replay').addEventListener('touchstart', e => {
+document.getElementById('kbd-replay').addEventListener('pointerdown', e => {
   e.preventDefault();
   if (inputFn) inputFn('/', 'kbd');
-}, { passive: false });
-
-// Nav menu
-document.getElementById('nav-up').addEventListener('touchstart', e => {
+});
+document.getElementById('nav-up').addEventListener('pointerdown', e => {
   e.preventDefault(); menuNav(-1);
-}, { passive: false });
-document.getElementById('nav-dn').addEventListener('touchstart', e => {
+});
+document.getElementById('nav-dn').addEventListener('pointerdown', e => {
   e.preventDefault(); menuNav(1);
-}, { passive: false });
-document.getElementById('nav-ok').addEventListener('touchstart', e => {
+});
+document.getElementById('nav-ok').addEventListener('pointerdown', e => {
   e.preventDefault(); menuExec();
-}, { passive: false });
+});
 
 </script>
 
