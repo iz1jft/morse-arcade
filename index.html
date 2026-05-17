@@ -1473,16 +1473,30 @@ function showNav(show) {
 }
 
 // Tasti QWERTY → inputFn
+// Funzione globale per input da tastiera mobile
+function mobileKey(ch) {
+  if (AC.state === 'suspended') AC.resume();
+  const scr = currentScreen;
+  if (scr === 'rx')       { procRX(ch); return; }
+  if (scr === 'tx')       { if(inputFn) inputFn(ch,'kbd'); return; }
+  if (scr === 'invaders') { if(inputFn) inputFn(ch,'kbd'); return; }
+  if (scr === 'echo')     { if(inputFn) inputFn(ch,'kbd'); return; }
+  if (scr === 'board' || scr === 'gameover') { goScreen('menu'); return; }
+}
+
+function mobileReplay() {
+  if (currentScreen === 'rx') procRX('/');
+}
+
 document.querySelectorAll('.kbd-key').forEach(btn => {
   btn.addEventListener('pointerdown', e => {
     e.preventDefault();
-    if (AC.state === 'suspended') AC.resume();
-    if (inputFn) inputFn(btn.dataset.k, 'kbd');
+    mobileKey(btn.dataset.k);
   });
 });
 document.getElementById('kbd-replay').addEventListener('pointerdown', e => {
   e.preventDefault();
-  if (inputFn) inputFn('/', 'kbd');
+  mobileReplay();
 });
 document.getElementById('nav-up').addEventListener('pointerdown', e => {
   e.preventDefault(); menuNav(-1);
