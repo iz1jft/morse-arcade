@@ -805,6 +805,9 @@ document.addEventListener('keydown',function(e){
   if(document.getElementById('reg').classList.contains('show'))return;
   if(e.key==='F10'){e.preventDefault();openAdm();return;}
   if(scr==='menu'){
+    if (IS_MOBILE && document.getElementById('mob-nav')?.classList.contains('visible')) {
+  return;
+}
     if(e.repeat) return; // ignora tasto tenuto premuto
     if(e.key==='ArrowUp'||e.key==='w'||e.key==='W'){menuNav(-1);return;}
     if(e.key==='ArrowDown'||e.key==='s'||e.key==='S'){menuNav(1);return;}
