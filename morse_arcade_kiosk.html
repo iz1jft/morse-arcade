@@ -27,7 +27,7 @@ html,body{width:100%;height:100%;background:#050505;color:#fff;font-family:'Shar
 .fbtn{font-family:Orbitron,monospace;font-weight:700;font-size:clamp(.8rem,1.6vw,1.1rem);letter-spacing:.17em;padding:12px 0;border:2px solid var(--g);background:transparent;color:var(--g);cursor:pointer;width:min(480px,88vw);touch-action:manipulation;}
 .fbtn:hover,.fbtn:active{background:var(--g);color:#000;}
 .fbtn.red{border-color:var(--r);color:var(--r);} .fbtn.red:hover,.fbtn.red:active{background:var(--r);color:#000;}
-.fbtn.grey{border-color:#333;color:#555;} .fbtn.grey:hover,.fbtn.grey:active{background:#222;color:#aaa;}
+.fbtn.grey{border-color:#FFE600;color:#FFE600;} .fbtn.grey:hover,.fbtn.grey:active{background:#222;color:#aaa;}
 .fbtn.yel{border-color:var(--y);color:var(--y);} .fbtn.yel:hover,.fbtn.yel:active{background:var(--y);color:#000;}
 .srow{display:flex;flex-direction:column;gap:7px;width:min(480px,88vw);}
 .srow label{font-family:Orbitron,monospace;font-size:.78rem;color:#aaa;letter-spacing:.16em;display:flex;justify-content:space-between;}
@@ -41,8 +41,8 @@ html,body{width:100%;height:100%;background:#050505;color:#fff;font-family:'Shar
 .shdr{font-family:Orbitron,monospace;font-weight:900;font-size:1.1rem;color:var(--c);letter-spacing:.2em;margin-bottom:4px;}
 .sadm{font-family:Orbitron,monospace;font-size:.85rem;color:#aaa;letter-spacing:.1em;line-height:2;text-align:center;background:#040404;border:1px solid #141414;padding:10px 16px;width:min(480px,88vw);}
 .sadm b{color:var(--g);}
-.sclose{font-family:Orbitron,monospace;font-size:.7rem;color:#777;letter-spacing:.18em;cursor:pointer;margin-top:2px;}
-.sclose:hover{color:#555;}
+.sclose{font-family:Orbitron,monospace;font-size:.7rem;color:#FFE600;letter-spacing:.18em;cursor:pointer;margin-top:2px;}
+.sclose:hover{color:#FFE600;}
 #gear{position:fixed;bottom:12px;left:12px;width:34px;height:34px;background:transparent;border:1px solid #1e1e1e;color:#2a2a2a;font-size:1.1rem;cursor:pointer;z-index:100;display:flex;align-items:center;justify-content:center;border-radius:3px;}
 #gear:hover{border-color:var(--c);color:var(--c);}
 #serial-st{position:fixed;bottom:12px;right:150px;font-family:Orbitron,monospace;font-size:.55rem;letter-spacing:.09em;color:#1a1a1a;z-index:100;}
@@ -166,7 +166,7 @@ body.no-photo .no-photo-banner { display: block; }
   </div>
 
   <button class="fbtn" id="go-btn">INIZIA &rarr;</button>
-  <div style="font-family:Orbitron,monospace;font-size:.55rem;color:#1e1e1e;letter-spacing:.13em;margin-top:4px;">IZ1JFT &mdash; DIEGO &middot; ARI TORINO</div>
+  <div style="font-family:Orbitron,monospace;font-size:.55rem;color:#FFE600;letter-spacing:.13em;margin-top:4px;">IZ1JFT &mdash; DIEGO &middot; ARI TORINO</div>
 </div></div>
 
 <!-- SETTINGS -->
@@ -781,7 +781,20 @@ document.getElementById('crow-photo').addEventListener('click',function(e){
 function doReg(){
   var name=document.getElementById('rname').value.trim();
   if(!name){document.getElementById('rname').focus();return;}
-  curPlayer=name.toUpperCase();curEmail=document.getElementById('remail').value.trim().toLowerCase();
+  curPlayer=name.toUpperCase();
+
+  // Privacy: se NON ha dato il consenso, email e Instagram NON vengono salvati/inviati.
+  if(consentGiven){
+    curEmail=document.getElementById('remail').value.trim().toLowerCase();
+    curInsta=document.getElementById('rinsta').value.trim().toLowerCase();
+  }else{
+    curEmail='';
+    curInsta='';
+  }
+
+  // Foto: se NON ha dato il consenso, il gioco resta/segnala in rosso.
+  document.body.classList.toggle('no-photo',!photoConsent);
+
   document.getElementById('reg').classList.remove('show');
   currentScreen='welcome';
   setScreen(function(){
@@ -877,7 +890,7 @@ function drawMenu(){
     CTX.font=F(titleSz);CTX.shadowColor='rgba(0,255,255,.4)';CTX.shadowBlur=30;CTX.fillStyle='#00FFFF';
     CTX.fillText('MORSE ARCADE',W/2,H*.12);CTX.shadowBlur=0;
     CTX.font=FM(Math.min(W*.014,12));CTX.fillStyle='#252525';
-    CTX.fillText('ARI TORINO · COMICS 2025',W/2,H*.12+titleSz*.9);
+    CTX.fillText('ARI TORINO · COMICS 2026',W/2,H*.12+titleSz*.9);
     CTX.font=F(Math.min(W*.02,16),700);CTX.fillStyle='#FFE600';
     CTX.fillText('GIOCATORE: '+curPlayer,W/2,H*.12+titleSz*1.8);
     MENU_ITEMS.forEach(function(item,i){
