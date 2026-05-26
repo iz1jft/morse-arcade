@@ -8,40 +8,40 @@
 @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
 :root{--c:#00FFFF;--g:#00FF41;--y:#FFE600;--r:#FF2D2D;--o:#FF8C00;}
 *{margin:0;padding:0;box-sizing:border-box;}
-html,body{width:100%;height:100%;background:#000;color:#fff;font-family:'Share Tech Mono',monospace;overflow:hidden;user-select:none;}
+html,body{width:100%;height:100%;background:#050505;color:#fff;font-family:'Share Tech Mono',monospace;overflow:hidden;user-select:none;}
 #sl{position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.12) 2px,rgba(0,0,0,.12) 4px);pointer-events:none;z-index:50;}
 #main-canvas{position:fixed;top:0;left:0;width:100%;height:100%;display:block;z-index:1;pointer-events:none;}
 #reg,#settings,#adm{display:none;position:fixed;inset:0;background:rgba(0,0,0,.96);z-index:200;align-items:center;justify-content:center;flex-direction:column;gap:12px;padding:20px;overflow-y:auto;}
 #reg.show,#settings.show,#adm.show{display:flex;}
 .ftitle{font-family:Orbitron,monospace;font-weight:900;font-size:clamp(1.4rem,3vw,2.6rem);color:var(--c);letter-spacing:.12em;text-shadow:0 0 20px var(--c);text-align:center;}
-.fsub{font-family:Orbitron,monospace;font-size:.7rem;color:#333;letter-spacing:.22em;margin-bottom:6px;}
-.flabel{font-family:Orbitron,monospace;font-size:.65rem;color:#3a3a3a;letter-spacing:.18em;align-self:flex-start;width:min(480px,88vw);}
+.fsub{font-family:Orbitron,monospace;font-size:.78rem;color:#888;letter-spacing:.22em;margin-bottom:6px;}
+.flabel{font-family:Orbitron,monospace;font-size:.78rem;color:#aaa;letter-spacing:.18em;align-self:flex-start;width:min(480px,88vw);}
 .finput{font-family:Orbitron,monospace;font-size:clamp(.9rem,2vw,1.3rem);background:#080808;border:2px solid #222;color:var(--g);padding:10px 16px;letter-spacing:.13em;outline:none;width:min(480px,88vw);}
 .finput:focus{border-color:var(--c);}
-.disc{width:min(480px,88vw);background:#050505;border:1px solid #181818;padding:12px 16px;font-size:.62rem;color:#2e2e2e;line-height:1.65;}
-.disc strong{color:#444;}
+.disc{width:min(480px,88vw);background:#080808;border:1px solid #333;padding:12px 16px;font-size:.82rem;color:#c8c8c8;line-height:1.65;}
+.disc strong{color:#fff;}
 .crow{display:flex;align-items:flex-start;gap:10px;width:min(480px,88vw);cursor:pointer;touch-action:manipulation;}
-.cbox{width:24px;height:24px;min-width:24px;border:2px solid #2e2e2e;background:#000;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;cursor:pointer;margin-top:2px;}
+.cbox{width:24px;height:24px;min-width:24px;border:2px solid #777;background:#000;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;cursor:pointer;margin-top:2px;}
 .cbox.on{border-color:var(--g);background:#001400;color:var(--g);}
-.ctxt{font-size:.62rem;color:#2e2e2e;line-height:1.52;}
+.ctxt{font-size:.85rem;color:#d0d0d0;line-height:1.55;}
 .fbtn{font-family:Orbitron,monospace;font-weight:700;font-size:clamp(.8rem,1.6vw,1.1rem);letter-spacing:.17em;padding:12px 0;border:2px solid var(--g);background:transparent;color:var(--g);cursor:pointer;width:min(480px,88vw);touch-action:manipulation;}
 .fbtn:hover,.fbtn:active{background:var(--g);color:#000;}
 .fbtn.red{border-color:var(--r);color:var(--r);} .fbtn.red:hover,.fbtn.red:active{background:var(--r);color:#000;}
 .fbtn.grey{border-color:#333;color:#555;} .fbtn.grey:hover,.fbtn.grey:active{background:#222;color:#aaa;}
 .fbtn.yel{border-color:var(--y);color:var(--y);} .fbtn.yel:hover,.fbtn.yel:active{background:var(--y);color:#000;}
 .srow{display:flex;flex-direction:column;gap:7px;width:min(480px,88vw);}
-.srow label{font-family:Orbitron,monospace;font-size:.65rem;color:#3a3a3a;letter-spacing:.16em;display:flex;justify-content:space-between;}
+.srow label{font-family:Orbitron,monospace;font-size:.78rem;color:#aaa;letter-spacing:.16em;display:flex;justify-content:space-between;}
 .srow label span{color:var(--g);}
 .srow input[type=range]{width:100%;accent-color:var(--c);cursor:pointer;}
 .sbtns{display:flex;gap:6px;flex-wrap:wrap;}
-.sbtn{font-family:Orbitron,monospace;font-size:.68rem;letter-spacing:.1em;padding:7px 12px;border:1px solid #2a2a2a;background:transparent;color:#444;cursor:pointer;}
+.sbtn{font-family:Orbitron,monospace;font-size:.78rem;letter-spacing:.1em;padding:7px 12px;border:1px solid #555;background:transparent;color:#aaa;cursor:pointer;}
 .sbtn:hover{border-color:var(--c);color:var(--c);}
-.smult{font-family:Orbitron,monospace;font-size:.72rem;color:#2a2a2a;letter-spacing:.12em;text-align:center;}
+.smult{font-family:Orbitron,monospace;font-size:.8rem;color:#aaa;letter-spacing:.12em;text-align:center;}
 .smult b{color:var(--y);}
 .shdr{font-family:Orbitron,monospace;font-weight:900;font-size:1.1rem;color:var(--c);letter-spacing:.2em;margin-bottom:4px;}
-.sadm{font-family:Orbitron,monospace;font-size:.7rem;color:#333;letter-spacing:.1em;line-height:2;text-align:center;background:#040404;border:1px solid #141414;padding:10px 16px;width:min(480px,88vw);}
+.sadm{font-family:Orbitron,monospace;font-size:.85rem;color:#aaa;letter-spacing:.1em;line-height:2;text-align:center;background:#040404;border:1px solid #141414;padding:10px 16px;width:min(480px,88vw);}
 .sadm b{color:var(--g);}
-.sclose{font-family:Orbitron,monospace;font-size:.58rem;color:#1e1e1e;letter-spacing:.18em;cursor:pointer;margin-top:2px;}
+.sclose{font-family:Orbitron,monospace;font-size:.7rem;color:#777;letter-spacing:.18em;cursor:pointer;margin-top:2px;}
 .sclose:hover{color:#555;}
 #gear{position:fixed;bottom:12px;left:12px;width:34px;height:34px;background:transparent;border:1px solid #1e1e1e;color:#2a2a2a;font-size:1.1rem;cursor:pointer;z-index:100;display:flex;align-items:center;justify-content:center;border-radius:3px;}
 #gear:hover{border-color:var(--c);color:var(--c);}
@@ -104,8 +104,8 @@ body.no-photo #main-canvas { filter: none; }
 body.no-photo .no-photo-banner { display: block; }
 .crow2 { margin-top: 4px; }
 .disc2 { margin-top: 4px; background: #0a0000; border-color: #2a0000; }
-.disc2 strong { color: #553333; }
-.disc2 em { color: #3a2020; font-style: normal; }
+.disc2 strong { color: #FF8080; }
+.disc2 em { color: #FFB0B0; font-style: normal; }
 .cbox.photo { border-color: #FF2D2D; }
 .cbox.photo.on { border-color: #FF2D2D; background: #1a0000; color: #FF2D2D; }
 </style>
@@ -149,7 +149,7 @@ body.no-photo .no-photo-banner { display: block; }
     <div class="cbox" id="cbox-data"></div>
     <div class="ctxt">
       Acconsento al trattamento di email e Instagram per classifica, attestato e tag social.
-      <em style="color:#222">(Facoltativo — solo se hai compilato i campi)</em>
+      <em style="color:#888">(Facoltativo — solo se hai compilato i campi)</em>
     </div>
   </div>
 
@@ -166,7 +166,7 @@ body.no-photo .no-photo-banner { display: block; }
     <div class="ctxt">
       Acconsento alla pubblicazione di foto/video che mi ritraggono
       su Instagram @iq1to e canali ARI Torino.
-      <em style="color:#222">(Se non acconsenti lo sfondo diventa rosso)</em>
+      <em style="color:#888">(Se non acconsenti lo sfondo diventa rosso)</em>
     </div>
   </div>
 
@@ -847,16 +847,14 @@ function toggleConsent(id,val,setter) {
   b.textContent=val?'\u2713':'';
   return val;
 }
-['pointerdown','click'].forEach(function(ev){
-  document.getElementById('crow-data').addEventListener(ev,function(e){
-    e.preventDefault();
-    consentGiven=toggleConsent('cbox-data',consentGiven,function(v){consentGiven=v;});
-  });
-  document.getElementById('crow-photo').addEventListener(ev,function(e){
-    e.preventDefault();
-    photoConsent=toggleConsent('cbox-photo',photoConsent,function(v){photoConsent=v;});
-    document.body.classList.toggle('no-photo',!photoConsent);
-  });
+document.getElementById('crow-data').addEventListener('click',function(e){
+  e.preventDefault();
+  consentGiven=toggleConsent('cbox-data',consentGiven,function(v){consentGiven=v;});
+});
+document.getElementById('crow-photo').addEventListener('click',function(e){
+  e.preventDefault();
+  photoConsent=toggleConsent('cbox-photo',photoConsent,function(v){photoConsent=v;});
+  document.body.classList.toggle('no-photo',!photoConsent);
 });
 function doReg(){
   var name=document.getElementById('rname').value.trim();
