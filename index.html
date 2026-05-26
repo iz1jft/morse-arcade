@@ -64,10 +64,62 @@ html,body{width:100%;height:100%;background:#000;color:#fff;font-family:'Share T
 .nav-btn.enter:active{background:#00FFFF;color:#000;}
 
 
+
+/* ── ATTRACT MODE ── */
+#p-attract {
+  display: none; position: fixed; inset: 0;
+  background: #000; z-index: 150;
+  cursor: none;
+}
+#p-attract.show { display: block; }
+#attract-cv {
+  position: absolute; top: 0; left: 0;
+  width: 100%; height: 100%;
+  display: block;
+}
+#attract-overlay {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  height: 60px;
+  background: linear-gradient(transparent, #000);
+  pointer-events: none;
+}
+
+/* ── PHOTO CONSENT ── */
+body.no-photo { background: #1a0000 !important; }
+body.no-photo #sl { background: repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(80,0,0,.18) 2px,rgba(80,0,0,.18) 4px); }
+body.no-photo #main-canvas { filter: none; }
+.no-photo-banner {
+  display: none;
+  position: fixed; top: 0; left: 0; right: 0;
+  background: #3a0000;
+  border-bottom: 2px solid #FF2D2D;
+  color: #FF2D2D;
+  font-family: Orbitron, monospace;
+  font-size: clamp(.55rem, 1.5vw, .75rem);
+  letter-spacing: .15em;
+  text-align: center;
+  padding: 5px;
+  z-index: 300;
+}
+body.no-photo .no-photo-banner { display: block; }
+.crow2 { margin-top: 4px; }
+.disc2 { margin-top: 4px; background: #0a0000; border-color: #2a0000; }
+.disc2 strong { color: #553333; }
+.disc2 em { color: #3a2020; font-style: normal; }
+.cbox.photo { border-color: #FF2D2D; }
+.cbox.photo.on { border-color: #FF2D2D; background: #1a0000; color: #FF2D2D; }
 </style>
 </head>
 <body>
+
+<!-- ATTRACT MODE -->
+<div id="p-attract">
+  <canvas id="attract-cv"></canvas>
+  <div id="attract-overlay"></div>
+</div>
+
 <div id="sl" aria-hidden="true"></div>
+<div class="no-photo-banner">&#9888; NESSUNA FOTO &mdash; SFONDO ROSSO ATTIVO &mdash; QUESTO GIOCATORE NON HA ACCONSENTITO ALLE FOTOGRAFIE</div>
 <canvas id="main-canvas"></canvas>
 
 <!-- REGISTRATION -->
@@ -77,20 +129,50 @@ html,body{width:100%;height:100%;background:#000;color:#fff;font-family:'Share T
   <div class="fsub">ARI TORINO &middot; COMICS 2026</div>
   <div class="flabel">NOME O NOMINATIVO *</div>
   <input id="rname" class="finput" type="text" maxlength="24" autocomplete="off" spellcheck="false" placeholder="es. IZ1JFT o MARIO R.">
-  <div class="flabel">EMAIL (opzionale)</div>
+  <div class="flabel">EMAIL (opzionale — per classifica e attestato)</div>
   <input id="remail" class="finput" type="email" maxlength="60" autocomplete="off" spellcheck="false" placeholder="mario@example.com">
+  <div class="flabel">@INSTAGRAM (opzionale — per essere taggiato sui nostri social)</div>
+  <input id="rinsta" class="finput" type="text" maxlength="40" autocomplete="off" spellcheck="false" placeholder="@tuonomeutente">
+
   <div class="disc">
-    <strong>Privacy &mdash; art. 13 GDPR 2016/679</strong><br>
-    Dati trattati da <strong>ARI Sezione di Torino</strong> per classifica e attestato.
-    Nessun uso marketing. Titolare: iz1jft@gmail.com
+    <strong>Informativa privacy &mdash; art. 13 GDPR 2016/679</strong><br>
+    Titolare del trattamento: <strong>ARI &mdash; Sezione di Torino</strong> &middot; iz1jft@gmail.com<br>
+    I dati raccolti (nome, email, Instagram) sono trattati esclusivamente per:<br>
+    &bull; Gestione della classifica dell&rsquo;evento<br>
+    &bull; Invio di eventuale attestato di partecipazione<br>
+    &bull; Tag sui social @iq1to se autorizzato<br>
+    Nessun uso commerciale. I dati non vengono ceduti a terzi.
+    Puoi esercitare i tuoi diritti scrivendo a iz1jft@gmail.com
   </div>
-  <div class="crow" id="crow">
-    <div class="cbox" id="cbox"></div>
-    <div class="ctxt">Acconsento al trattamento email per classifica/attestato.</div>
+
+  <div class="crow" id="crow-data">
+    <div class="cbox" id="cbox-data"></div>
+    <div class="ctxt">
+      Acconsento al trattamento di email e Instagram per classifica, attestato e tag social.
+      <em style="color:#222">(Facoltativo — solo se hai compilato i campi)</em>
+    </div>
   </div>
+
+  <div class="disc disc2">
+    <strong>Consenso fotografico e pubblicazione social</strong><br>
+    Durante l&rsquo;evento potremmo scattare fotografie e pubblicarle su
+    <strong>Instagram @iq1to</strong> e altri canali ARI Torino.<br>
+    <em>Se non acconsenti, lo sfondo del gioco diventer&agrave; ROSSO
+    come segnale visivo per i fotografi: nessuna foto verr&agrave; scattata.</em>
+  </div>
+
+  <div class="crow crow2" id="crow-photo">
+    <div class="cbox photo" id="cbox-photo"></div>
+    <div class="ctxt">
+      Acconsento alla pubblicazione di foto/video che mi ritraggono
+      su Instagram @iq1to e canali ARI Torino.
+      <em style="color:#222">(Se non acconsenti lo sfondo diventa rosso)</em>
+    </div>
+  </div>
+
   <button class="fbtn" id="go-btn">INIZIA &rarr;</button>
   <div style="font-family:Orbitron,monospace;font-size:.55rem;color:#1e1e1e;letter-spacing:.13em;margin-top:4px;">IZ1JFT &mdash; DIEGO &middot; ARI TORINO</div>
-</div>
+</div></div>
 
 <!-- SETTINGS -->
 <div id="settings">
@@ -154,6 +236,382 @@ html,body{width:100%;height:100%;background:#000;color:#fff;font-family:'Share T
 <script>
 'use strict';
 
+// ══ ATTRACT MODE — Telescrivente Futuristica ══
+// E×3 = backspace, E×4 = clear, timeout = spazio, click/touch = login
+
+const ATTRACT = (function() {
+
+  // Testo corrente sullo schermo
+  var lines = [[]]; // array di righe, ogni riga è array di {ch, age, alpha}
+  var curLine = 0;
+  var COLS, ROWS, CELL_W, CELL_H;
+  var canvasW, canvasH;
+
+  // Contatore E consecutive
+  var eCount = 0;
+  var eTimer = null;
+  var E_WINDOW = 600; // ms per considerare E consecutive
+
+  // Timeout silenzio → spazio
+  var silenceTimer = null;
+  var SILENCE_MS = 2200; // 2.2 secondi
+
+  // Animazione
+  var animId = null;
+  var t = 0;
+  var cursorBlink = 0;
+
+  // Scan lines e glow
+  var scanY = 0;
+
+  function calcLayout(W, H) {
+    canvasW = W; canvasH = H;
+    CELL_W = Math.min(W * 0.065, 52);
+    CELL_H = CELL_W * 1.35;
+    COLS = Math.floor((W - 80) / CELL_W);
+    ROWS = Math.floor((H * 0.72) / CELL_H);
+    if (COLS < 8) COLS = 8;
+    if (ROWS < 3) ROWS = 3;
+  }
+
+  function addChar(ch) {
+    var row = lines[curLine];
+    if (row.length >= COLS) {
+      // Vai a capo
+      curLine++;
+      if (curLine >= ROWS) {
+        // Scorri su — rimuovi prima riga
+        lines.shift();
+        curLine = ROWS - 1;
+      }
+      lines[curLine] = [];
+      row = lines[curLine];
+    }
+    row.push({ch: ch, age: 0, spark: 12});
+  }
+
+  function addSpace() {
+    var row = lines[curLine];
+    // Non aggiungere spazi multipli
+    if (row.length === 0) return;
+    if (row[row.length-1].ch === ' ') return;
+    row.push({ch: ' ', age: 0, spark: 0});
+  }
+
+  function backspace() {
+    var row = lines[curLine];
+    if (row.length > 0) {
+      row.pop();
+    } else if (curLine > 0) {
+      lines.splice(curLine, 1);
+      curLine--;
+    }
+  }
+
+  function clearAll() {
+    lines = [[]];
+    curLine = 0;
+    eCount = 0;
+  }
+
+  function processE() {
+    eCount++;
+    clearTimeout(eTimer);
+    if (eCount >= 4) {
+      clearAll();
+      eCount = 0;
+      return;
+    }
+    if (eCount === 3) {
+      // Aspetta ancora un po' per vedere se arriva il 4°
+      eTimer = setTimeout(function() {
+        // Solo 3 E — backspace
+        backspace();
+        eCount = 0;
+      }, E_WINDOW);
+      return;
+    }
+    // 1 o 2 E — aspetta per vedere se ne arrivano altre
+    eTimer = setTimeout(function() {
+      // Timeout scaduto — tratta come lettera(e) normale(i)
+      for (var i = 0; i < eCount; i++) addChar('E');
+      eCount = 0;
+    }, E_WINDOW);
+  }
+
+  function onKey(ch) {
+    resetSilence();
+    if (ch === 'E') {
+      processE();
+      return;
+    }
+    // Flush E pendenti come lettere normali
+    if (eCount > 0) {
+      clearTimeout(eTimer);
+      for (var i = 0; i < eCount; i++) addChar('E');
+      eCount = 0;
+    }
+    addChar(ch);
+  }
+
+  function resetSilence() {
+    clearTimeout(silenceTimer);
+    silenceTimer = setTimeout(function() {
+      // Flush E pendenti prima dello spazio
+      if (eCount > 0) {
+        clearTimeout(eTimer);
+        if (eCount >= 4) { clearAll(); }
+        else if (eCount === 3) { backspace(); }
+        else { for (var i = 0; i < eCount; i++) addChar('E'); }
+        eCount = 0;
+      }
+      addSpace();
+    }, SILENCE_MS);
+  }
+
+  function draw(CTX, W, H, frame) {
+    t = frame;
+    cursorBlink = Math.sin(t * 0.08) > 0 ? 1 : 0;
+    scanY = (scanY + 1.5) % H;
+
+    // Sfondo
+    CTX.fillStyle = '#000';
+    CTX.fillRect(0, 0, W, H);
+
+    // Bordo CRT — vignette
+    var vgr = CTX.createRadialGradient(W/2, H/2, H*0.3, W/2, H/2, H*0.85);
+    vgr.addColorStop(0, 'transparent');
+    vgr.addColorStop(1, 'rgba(0,0,0,0.55)');
+    CTX.fillStyle = vgr;
+    CTX.fillRect(0, 0, W, H);
+
+    // Linea scan
+    var slg = CTX.createLinearGradient(0, scanY - 12, 0, scanY + 12);
+    slg.addColorStop(0, 'transparent');
+    slg.addColorStop(0.5, 'rgba(0,255,65,0.06)');
+    slg.addColorStop(1, 'transparent');
+    CTX.fillStyle = slg;
+    CTX.fillRect(0, scanY - 12, W, 24);
+
+    // Titolo in cima
+    var titleSz = Math.min(W * 0.032, 26);
+    CTX.font = titleSz + 'px Orbitron,"Courier New",monospace';
+    CTX.textAlign = 'center';
+    CTX.textBaseline = 'middle';
+    CTX.fillStyle = '#003a00';
+    CTX.fillText('ARI TORINO · MORSE ARCADE · IZ1JFT', W/2, 28);
+
+    // Area testo
+    var areaX = 40;
+    var areaY = H * 0.12;
+    var areaW = W - 80;
+    var areaH = ROWS * CELL_H + CELL_H;
+
+    // Bordo area testo stile CRT
+    CTX.strokeStyle = '#001800';
+    CTX.lineWidth = 1;
+    CTX.strokeRect(areaX - 10, areaY - 8, areaW + 20, areaH + 16);
+
+    // Righe di testo
+    var fontSz = Math.min(CELL_W * 0.72, 38);
+    CTX.font = '900 ' + fontSz + 'px Orbitron,"Courier New",monospace';
+    CTX.textBaseline = 'middle';
+
+    for (var r = 0; r < lines.length; r++) {
+      var row = lines[r];
+      var rowY = areaY + r * CELL_H + CELL_H / 2;
+      var isLastRow = (r === curLine);
+
+      for (var c = 0; c < row.length; c++) {
+        var cell = row[c];
+        if (!cell || cell.ch === ' ') continue;
+        cell.age++;
+
+        var cx = areaX + c * CELL_W + CELL_W / 2;
+
+        // Spark effect per caratteri nuovi
+        var spark = Math.max(0, cell.spark);
+        cell.spark = Math.max(0, cell.spark - 1);
+
+        // Colore base verde CRT con variazione per età
+        var freshness = Math.max(0, 1 - cell.age / 180);
+        var baseG = Math.round(180 + freshness * 75);
+        var baseR = Math.round(freshness * 40);
+
+        if (spark > 0) {
+          // Effetto spark iniziale — bianco brillante
+          var sp = spark / 12;
+          CTX.shadowColor = '#ffffff';
+          CTX.shadowBlur = 20 + sp * 30;
+          CTX.fillStyle = 'rgb(' + Math.round(200 + sp * 55) + ',' + Math.round(baseG + sp * 75) + ',0)';
+        } else if (isLastRow && c === row.length - 1) {
+          // Ultimo carattere — più luminoso
+          CTX.shadowColor = '#00FF41';
+          CTX.shadowBlur = 14;
+          CTX.fillStyle = '#00FF41';
+        } else {
+          // Carattere normale — verde CRT con fade
+          CTX.shadowColor = 'rgba(' + baseR + ',' + baseG + ',0,0.4)';
+          CTX.shadowBlur = 8 - freshness * 4;
+          CTX.fillStyle = 'rgb(' + baseR + ',' + baseG + ',0)';
+        }
+
+        CTX.textAlign = 'center';
+        CTX.fillText(cell.ch, cx, rowY);
+        CTX.shadowBlur = 0;
+      }
+    }
+
+    // Cursore lampeggiante
+    var curRow = lines[curLine] || [];
+    var curX = areaX + curRow.length * CELL_W;
+    var curY = areaY + curLine * CELL_H;
+    if (cursorBlink) {
+      CTX.fillStyle = '#00FF41';
+      CTX.shadowColor = '#00FF41';
+      CTX.shadowBlur = 10;
+      CTX.fillRect(curX + 2, curY + CELL_H * 0.15, CELL_W * 0.7, CELL_H * 0.7);
+      CTX.shadowBlur = 0;
+    }
+
+    // Istruzioni in basso
+    var infoSz = Math.min(W * 0.014, 12);
+    CTX.font = infoSz + 'px "Share Tech Mono",monospace';
+    CTX.textAlign = 'center';
+    CTX.textBaseline = 'bottom';
+
+    CTX.fillStyle = '#002200';
+    CTX.fillText('TRASMETTI CON IL KEYER · EEE = CANCELLA CARATTERE · EEEE = PULISCI TUTTO', W/2, H * 0.88);
+
+    CTX.fillStyle = '#003300';
+    CTX.font = '700 ' + Math.min(W * 0.016, 14) + 'px Orbitron,monospace';
+    var blink2 = Math.sin(t * 0.04) > 0;
+    CTX.fillStyle = blink2 ? '#004400' : '#002200';
+    CTX.fillText('— TOCCA LO SCHERMO O PREMI UN TASTO PER ACCEDERE —', W/2, H * 0.96);
+
+    // F9 = keyer
+    CTX.font = infoSz + 'px "Share Tech Mono",monospace';
+    CTX.fillStyle = '#001500';
+    CTX.textAlign = 'left';
+    CTX.fillText('F9 = CONNETTI KEYER', 20, H - 8);
+
+    CTX.textAlign = 'right';
+    CTX.fillText('MORSE ARCADE · ARI TORINO · IZ1JFT', W - 20, H - 8);
+  }
+
+  return {
+    init: function(W, H) { calcLayout(W, H); clearAll(); },
+    resize: function(W, H) { calcLayout(W, H); },
+    draw: draw,
+    onKey: onKey,
+    clear: clearAll
+  };
+})();
+
+
+// ══ ATTRACT MODE INTEGRATION ══
+var attractCv = document.getElementById('attract-cv');
+var attractCtx = attractCv.getContext('2d');
+var attractAnimId = null;
+var attractFrame = 0;
+var attractActive = false;
+var attractSerial = null;
+
+function attractResize() {
+  attractCv.width = window.innerWidth;
+  attractCv.height = window.innerHeight;
+  ATTRACT.resize(attractCv.width, attractCv.height);
+}
+
+function attractLoop() {
+  if (!attractActive) return;
+  attractFrame++;
+  ATTRACT.draw(attractCtx, attractCv.width, attractCv.height, attractFrame);
+  attractAnimId = requestAnimationFrame(attractLoop);
+}
+
+function startAttract() {
+  attractActive = true;
+  document.getElementById('p-attract').classList.add('show');
+  attractResize();
+  ATTRACT.init(attractCv.width, attractCv.height);
+  attractLoop();
+
+  // Connetti keyer se disponibile
+  if ('serial' in navigator && attractSerial === null) {
+    // Non chiediamo automaticamente — aspettiamo F9
+  }
+}
+
+function stopAttract() {
+  attractActive = false;
+  if (attractAnimId) { cancelAnimationFrame(attractAnimId); attractAnimId = null; }
+  document.getElementById('p-attract').classList.remove('show');
+}
+
+// Click/touch → vai al login
+document.getElementById('p-attract').addEventListener('pointerdown', function(e) {
+  if (AC && AC.state === 'suspended') AC.resume();
+  stopAttract();
+  showLogin();
+});
+
+// Tastiera in attract mode
+document.addEventListener('keydown', function(e) {
+  if (!attractActive) return;
+  if (AC && AC.state === 'suspended') AC.resume();
+  // F9 = connetti keyer
+  if (e.key === 'F9') {
+    connectAttractSerial();
+    return;
+  }
+  // Qualsiasi tasto non-lettera → login
+  if (e.key.length !== 1 || !/[a-zA-Z]/.test(e.key)) {
+    stopAttract();
+    showLogin();
+    return;
+  }
+  // Lettera → attract
+  ATTRACT.onKey(e.key.toUpperCase());
+});
+
+async function connectAttractSerial() {
+  if (!('serial' in navigator)) return;
+  try {
+    attractSerial = await navigator.serial.requestPort();
+    await attractSerial.open({baudRate: 1200, stopBits: 2});
+    var w = attractSerial.writable.getWriter();
+    await w.write(new Uint8Array([0x00, 0x02]));
+    await new Promise(function(r) { setTimeout(r, 120); });
+    await w.write(new Uint8Array([0x0E, 0x40]));
+    w.releaseLock();
+    // Loop lettura
+    (async function() {
+      while (attractSerial && attractSerial.readable) {
+        var sr = attractSerial.readable.getReader();
+        try {
+          while (true) {
+            var res = await sr.read();
+            if (res.done) break;
+            Array.from(res.value).forEach(function(b) {
+              if (!(b & 0x80)) {
+                var ch = String.fromCharCode(b).toUpperCase();
+                if (attractActive) ATTRACT.onKey(ch);
+                else if (inputFn) inputFn(ch, 'serial');
+              }
+            });
+          }
+        } catch(e) {} finally { sr.releaseLock(); }
+      }
+    })();
+  } catch(e) {}
+}
+
+window.addEventListener('resize', function() {
+  if (attractActive) attractResize();
+});
+
+
 // ══ MOBILE ══
 const IS_MOBILE = navigator.maxTouchPoints > 0 && window.matchMedia('(pointer:coarse)').matches;
 
@@ -207,6 +665,7 @@ function mobShowNav(show) {
       if (AC.state==='suspended') AC.resume();
       fn();
     });
+    el.addEventListener('click', function(e) { e.preventDefault(); fn(); });
   }
 
   addNav(up, function(){ menuNav(-1); });
@@ -295,7 +754,7 @@ var DB={
     if(curEmail)_R.emails[player]=curEmail;
     if(navigator.onLine)setTimeout(function(){
       fetch(SHEET,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({ts:Date.now(),player:player,email:curEmail||'',game:game,score:score})}).catch(function(){});
+        body:JSON.stringify({ts:Date.now(),player:player,email:curEmail||'',insta:curInsta||'',photo:photoConsent,game:game,score:score})}).catch(function(){});
     },50);
   },
   all:function(){
@@ -378,13 +837,26 @@ function cls(){CTX.fillStyle='#000';CTX.fillRect(0,0,W,H);}
 
 // ══ REGISTRATION ══
 var consentGiven=false;
-document.getElementById('crow').addEventListener('pointerdown',function(e){
-  e.preventDefault();consentGiven=!consentGiven;
-  var b=document.getElementById('cbox');b.classList.toggle('on',consentGiven);b.textContent=consentGiven?'\u2713':'';
-});
-document.getElementById('crow').addEventListener('click',function(e){
-  e.preventDefault();consentGiven=!consentGiven;
-  var b=document.getElementById('cbox');b.classList.toggle('on',consentGiven);b.textContent=consentGiven?'\u2713':'';
+var photoConsent=false;
+var curInsta="";
+function toggleConsent(id,val,setter) {
+  val = !val;
+  setter(val);
+  var b=document.getElementById(id);
+  b.classList.toggle('on',val);
+  b.textContent=val?'\u2713':'';
+  return val;
+}
+['pointerdown','click'].forEach(function(ev){
+  document.getElementById('crow-data').addEventListener(ev,function(e){
+    e.preventDefault();
+    consentGiven=toggleConsent('cbox-data',consentGiven,function(v){consentGiven=v;});
+  });
+  document.getElementById('crow-photo').addEventListener(ev,function(e){
+    e.preventDefault();
+    photoConsent=toggleConsent('cbox-photo',photoConsent,function(v){photoConsent=v;});
+    document.body.classList.toggle('no-photo',!photoConsent);
+  });
 });
 function doReg(){
   var name=document.getElementById('rname').value.trim();
@@ -406,9 +878,14 @@ document.getElementById('go-btn').addEventListener('click',function(e){e.prevent
 document.getElementById('rname').addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('remail').focus();});
 document.getElementById('remail').addEventListener('keydown',function(e){if(e.key==='Enter')doReg();});
 function openReg(){
-  curPlayer='';curEmail='';
-  document.getElementById('rname').value='';document.getElementById('remail').value='';
-  consentGiven=false;var b=document.getElementById('cbox');b.classList.remove('on');b.textContent='';
+  curPlayer='';curEmail='';curInsta='';
+  document.getElementById('rname').value='';
+  document.getElementById('remail').value='';
+  if(document.getElementById('rinsta'))document.getElementById('rinsta').value='';
+  consentGiven=false;photoConsent=false;
+  var b=document.getElementById('cbox-data');if(b){b.classList.remove('on');b.textContent='';}
+  var p=document.getElementById('cbox-photo');if(p){p.classList.remove('on');p.textContent='';}
+  document.body.classList.remove('no-photo');
   document.getElementById('reg').classList.add('show');
   setTimeout(function(){document.getElementById('rname').focus();},80);
 }
@@ -480,7 +957,7 @@ function drawMenu(){
     CTX.font=F(titleSz);CTX.shadowColor='rgba(0,255,255,.4)';CTX.shadowBlur=30;CTX.fillStyle='#00FFFF';
     CTX.fillText('MORSE ARCADE',W/2,H*.12);CTX.shadowBlur=0;
     CTX.font=FM(Math.min(W*.014,12));CTX.fillStyle='#252525';
-    CTX.fillText('ARI TORINO · COMICS 2026',W/2,H*.12+titleSz*.9);
+    CTX.fillText('ARI TORINO · COMICS 2025',W/2,H*.12+titleSz*.9);
     CTX.font=F(Math.min(W*.02,16),700);CTX.fillStyle='#FFE600';
     CTX.fillText('GIOCATORE: '+curPlayer,W/2,H*.12+titleSz*1.8);
     MENU_ITEMS.forEach(function(item,i){
@@ -805,9 +1282,6 @@ document.addEventListener('keydown',function(e){
   if(document.getElementById('reg').classList.contains('show'))return;
   if(e.key==='F10'){e.preventDefault();openAdm();return;}
   if(scr==='menu'){
-    if (IS_MOBILE && document.getElementById('mob-nav')?.classList.contains('visible')) {
-  return;
-}
     if(e.repeat) return; // ignora tasto tenuto premuto
     if(e.key==='ArrowUp'||e.key==='w'||e.key==='W'){menuNav(-1);return;}
     if(e.key==='ArrowDown'||e.key==='s'||e.key==='S'){menuNav(1);return;}
@@ -828,7 +1302,12 @@ if(!('serial' in navigator)){
 }
 
 // ══ START ══
-openReg();
+function showLogin() {
+  // apre la registrazione o il login a seconda del file
+  if (typeof openReg === 'function') openReg();
+  else if (typeof doLoginShow === 'function') doLoginShow();
+}
+startAttract();
 
 </script>
 </body>
