@@ -833,8 +833,14 @@ function setScreen(draw,input){
 function loop(){if(!drawFn)return;drawFn();animId=requestAnimationFrame(loop);}
 var F=function(size,w){return(w||900)+' '+size+'px Orbitron,"Courier New",monospace';};
 var FM=function(size){return size+'px "Share Tech Mono",monospace';};
-function cls(){CTX.fillStyle='#000';CTX.fillRect(0,0,W,H);}
+function cls(){  if(photoConsent){
+    CTX.fillStyle='#000';
+  }else{
+    CTX.fillStyle='#300';
+  }
 
+  CTX.fillRect(0,0,W,H);
+}
 // ══ REGISTRATION ══
 var consentGiven=false;
 var photoConsent=false;
