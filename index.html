@@ -132,7 +132,7 @@ body.no-photo .no-photo-banner { display: block; }
   <div class="flabel">EMAIL (opzionale — per classifica e attestato)</div>
   <input id="remail" class="finput" type="email" maxlength="60" autocomplete="off" spellcheck="false" placeholder="mario@example.com">
   <div class="flabel">@INSTAGRAM (opzionale — per essere taggiato sui nostri social)</div>
-  <input id="rinsta" class="finput" type="text" maxlength="40" autocomplete="off" spellcheck="false" placeholder="@tuonomeutente">
+  <input id="rinsta" class="finput" type="text" maxlength="40" autocomplete="off" spellcheck="false" placeholder="@INSTAGRAM">
 
   <div class="disc">
     <strong>Informativa privacy &mdash; art. 13 GDPR 2016/679</strong><br>
@@ -859,7 +859,9 @@ document.getElementById('crow-photo').addEventListener('click',function(e){
 function doReg(){
   var name=document.getElementById('rname').value.trim();
   if(!name){document.getElementById('rname').focus();return;}
-  curPlayer=name.toUpperCase();curEmail=document.getElementById('remail').value.trim().toLowerCase();
+  curPlayer=name.toUpperCase();
+  curEmail=document.getElementById('remail').value.trim().toLowerCase();
+  curInsta=document.getElementById('rinsta').value.trim().toLowerCase();
   document.getElementById('reg').classList.remove('show');
   currentScreen='welcome';
   setScreen(function(){
