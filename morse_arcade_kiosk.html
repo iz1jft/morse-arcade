@@ -1639,7 +1639,7 @@ function drawBoard(){
     var meStr=me?'TU: '+curPlayer.substring(0,14)+' | POS: '+rank+'\u00b0 | PUNTI: '+me.total:curPlayer+' \u2014 NESSUN PUNTEGGIO';
     CTX.fillText(meStr,W/2,H*.88);
     CTX.font=FM(Math.min(W*.013,11));CTX.fillStyle='#7a6200';CTX.textBaseline='bottom';CTX.textAlign='center';
-    CTX.fillText('\u2014 QUALSIASI TASTO PER USCIRE \u2014',W/2,H-12);
+    CTX.fillText('\u2014 ESC PER USCIRE \u2014',W/2,H-12);
   },function(){goScreen('menu');});
 }
 
@@ -1670,7 +1670,7 @@ function showGO(title,msg){
     CTX.font=F(Math.min(W*.032,28),700);CTX.fillStyle='#FFE600';
     msg.split('\n').forEach(function(line,i){CTX.fillText(line,W/2,H*.52+i*44);});
     CTX.font=FM(Math.min(W*.015,13));var blink=Math.sin(Date.now()*.003)>.2;
-    CTX.fillStyle=blink?'#aa8800':'#7a6200';CTX.fillText('\u2014 PREMI QUALSIASI TASTO PER CONTINUARE \u2014',W/2,H*.75);
+    CTX.fillStyle=blink?'#aa8800':'#7a6200';CTX.fillText('\u2014 PREMI ESC PER CONTINUARE \u2014',W/2,H*.75);
   },function(){goScreen('menu');});
 }
 
