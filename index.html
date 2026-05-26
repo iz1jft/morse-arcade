@@ -11,7 +11,7 @@
 html,body{width:100%;height:100%;background:#050505;color:#fff;font-family:'Share Tech Mono',monospace;overflow:hidden;user-select:none;}
 #sl{position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.12) 2px,rgba(0,0,0,.12) 4px);pointer-events:none;z-index:50;}
 #main-canvas{position:fixed;top:0;left:0;width:100%;height:100%;display:block;z-index:1;pointer-events:none;}
-#reg,#settings,#adm{display:none;position:fixed;inset:0;background:rgba(0,0,0,.96);z-index:200;align-items:center;justify-content:center;flex-direction:column;gap:12px;padding:120px 20px 20px 20px;overflow-y:auto;}
+#reg,#settings,#adm{display:none;position:fixed;inset:0;background:rgba(0,0,0,.96);z-index:200;align-items:center;justify-content:center;flex-direction:column;gap:12px;padding:60px 20px 20px 20px;overflow-y:auto;}
 #reg.show,#settings.show,#adm.show{display:flex;}
 .ftitle{font-family:Orbitron,monospace;font-weight:900;font-size:clamp(1.4rem,3vw,2.6rem);color:var(--c);letter-spacing:.12em;text-shadow:0 0 20px var(--c);text-align:center;}
 .fsub{font-family:Orbitron,monospace;font-size:.78rem;color:#888;letter-spacing:.22em;margin-bottom:6px;}
@@ -134,41 +134,47 @@ body.no-photo .no-photo-banner { display: block; }
   <div class="flabel">@INSTAGRAM (opzionale — per essere taggiato sui nostri social)</div>
   <input id="rinsta" class="finput" type="text" maxlength="40" autocomplete="off" spellcheck="false" placeholder="@tuonomeutente">
 
-  <div class="disc">
-    <strong>Informativa privacy &mdash; art. 13 GDPR 2016/679</strong><br>
-    Titolare del trattamento: <strong>ARI &mdash; Sezione di Torino</strong> &middot; iz1jft@gmail.com<br>
-    I dati raccolti (nome, email, Instagram) sono trattati esclusivamente per:<br>
-    &bull; Gestione della classifica dell&rsquo;evento<br>
-    &bull; Invio di eventuale attestato di partecipazione<br>
-    &bull; Tag sui social @iq1to se autorizzato<br>
-    Nessun uso commerciale. I dati non vengono ceduti a terzi.
-    Puoi esercitare i tuoi diritti scrivendo a iz1jft@gmail.com
-  </div>
-
-  <div class="crow" id="crow-data">
-    <div class="cbox" id="cbox-data"></div>
-    <div class="ctxt">
-      Acconsento al trattamento di email e Instagram per classifica, attestato e tag social.
-      <em style="color:#888">(Facoltativo — solo se hai compilato i campi)</em>
+  <div style="display:flex;gap:10px;width:min(480px,88vw);align-items:flex-start;flex-wrap:wrap;">
+    <div style="flex:1;min-width:180px;">
+      <div class="disc">
+        <strong>Informativa privacy &mdash; art. 13 GDPR 2016/679</strong><br>
+        Titolare del trattamento: <strong>ARI &mdash; Sezione di Torino</strong> &middot; iz1jft@gmail.com<br>
+        I dati raccolti (nome, email, Instagram) sono trattati esclusivamente per:<br>
+        &bull; Gestione della classifica dell&rsquo;evento<br>
+        &bull; Invio di eventuale attestato di partecipazione<br>
+        &bull; Tag sui social @iq1to se autorizzato<br>
+        Nessun uso commerciale. I dati non vengono ceduti a terzi.
+        Puoi esercitare i tuoi diritti scrivendo a iz1jft@gmail.com
+      </div>
+    
+      <div class="crow" id="crow-data">
+        <div class="cbox" id="cbox-data"></div>
+        <div class="ctxt">
+          Acconsento al trattamento di email e Instagram per classifica, attestato e tag social.
+          <em style="color:#888">(Facoltativo — solo se hai compilato i campi)</em>
+        </div>
+      </div>
+    
+        <strong>Consenso fotografico e pubblicazione social</strong><br>
+        Durante l&rsquo;evento potremmo scattare fotografie e pubblicarle su
+        <strong>Instagram @iq1to</strong> e altri canali ARI Torino.<br>
+        <em>Se non acconsenti, lo sfondo del gioco diventer&agrave; ROSSO
+        come segnale visivo per i fotografi: nessuna foto verr&agrave; scattata.</em>
+      </div>
+    
+        <div class="ctxt">
+          Acconsento alla pubblicazione di foto/video che mi ritraggono
+          su Instagram @iq1to e canali ARI Torino.
+          <em style="color:#888">(Se non acconsenti lo sfondo diventa rosso)</em>
+        </div>
+      
     </div>
-  </div>
-
-  <div class="disc disc2">
-    <strong>Consenso fotografico e pubblicazione social</strong><br>
-    Durante l&rsquo;evento potremmo scattare fotografie e pubblicarle su
-    <strong>Instagram @iq1to</strong> e altri canali ARI Torino.<br>
-    <em>Se non acconsenti, lo sfondo del gioco diventer&agrave; ROSSO
-    come segnale visivo per i fotografi: nessuna foto verr&agrave; scattata.</em>
-  </div>
-
-  <div class="crow crow2" id="crow-photo">
-    <div class="cbox photo" id="cbox-photo"></div>
-    <div class="ctxt">
-      Acconsento alla pubblicazione di foto/video che mi ritraggono
-      su Instagram @iq1to e canali ARI Torino.
-      <em style="color:#888">(Se non acconsenti lo sfondo diventa rosso)</em>
+    <div style="flex:1;min-width:180px;">
+      <div class="disc disc2">
+      <div class="crow crow2" id="crow-photo">
+        <div class="cbox photo" id="cbox-photo"></div>
     </div>
-  </div>
+  </div></div>
 
   <button class="fbtn" id="go-btn">INIZIA &rarr;</button>
   <div style="font-family:Orbitron,monospace;font-size:.55rem;color:#FFE600;letter-spacing:.13em;margin-top:4px;">IZ1JFT &mdash; DIEGO &middot; ARI TORINO</div>
