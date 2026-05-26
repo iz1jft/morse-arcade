@@ -530,7 +530,7 @@ function stopAttract() {
   document.getElementById('p-attract').classList.remove('show');
 }
 
-// Click/touch → vai al login
+// Click/touch → vai al login, solo se la modalità attract viene avviata manualmente
 document.getElementById('p-attract').addEventListener('pointerdown', function(e) {
   if (AC && AC.state === 'suspended') AC.resume();
   stopAttract();
@@ -714,6 +714,16 @@ function handleSerial(data) {
   });
 }
 async function connectSerial(){
+  if(!('serial' in navigator)){
+    var ns=document.getElementById('serial-st');
+    if(ns){ns.textContent='\u2B24 WEB SERIAL: SOLO CHROME';ns.className='err';}
+    return false;
+  }
+  if(serialPort && serialPort.readable){
+    var ok=document.getElementById('serial-st');
+    if(ok){ok.textContent='\u2B24 KEYER: CONNESSO';ok.className='ok';}
+    return true;
+  }
   try{
     serialPort=await navigator.serial.requestPort();
     await serialPort.open({baudRate:1200,stopBits:2});
@@ -731,7 +741,12 @@ async function connectSerial(){
         catch(e){}finally{sr.releaseLock();}
       }
     })();
-  }catch(e){document.getElementById('serial-st').textContent='\u2B24 ERRORE SERIALE';document.getElementById('serial-st').className='err';}
+    return true;
+  }catch(e){
+    var er=document.getElementById('serial-st');
+    if(er){er.textContent='\u2B24 ERRORE SERIALE';er.className='err';}
+    return false;
+  }
 }
 async function sendWpm(w){
   if(!serialPort||!serialPort.writable)return;
@@ -1215,7 +1230,85 @@ function showGO(title,msg){
 
 
 // ══ TYPEWRITER / MACCHINA DA SCRIVERE ══
-function startTypewriter(){
+var typewriterMode='rx';
+var typewriterChoiceButtons=[];
+var typewriterChoiceMsg='';
+
+function drawTypewriterChoice(){
+  currentScreen='typewriter-choice';
+  var reg=document.getElementById('reg');
+  if(reg)reg.classList.remove('show');
+  mobShowInput(false);mobShowNav(false);
+
+  setScreen(function(){
+    cls();
+    CTX.textAlign='center';CTX.textBaseline='middle';
+    CTX.font=F(Math.min(W*.052,52),900);CTX.fillStyle='#FFE600';CTX.shadowColor='rgba(255,230,0,.45)';CTX.shadowBlur=24;
+    CTX.fillText('MACCHINA DA SCRIVERE',W/2,H*.17);CTX.shadowBlur=0;
+    CTX.font=FM(Math.min(W*.022,18));CTX.fillStyle='#00FFFF';
+    CTX.fillText('SCEGLI LA MODALITÀ',W/2,H*.25);
+
+    var bw=Math.min(W*.28,260),bh=Math.min(H*.12,78),gap=Math.min(W*.05,46);
+    var y=H*.43,x1=W/2-bw-gap/2,x2=W/2+gap/2;
+    typewriterChoiceButtons=[
+      {id:'tx',x:x1,y:y,w:bw,h:bh,label:'TX',sub:'KEYER SERIALE'},
+      {id:'rx',x:x2,y:y,w:bw,h:bh,label:'RX',sub:'TASTIERA PC'}
+    ];
+    typewriterChoiceButtons.forEach(function(b){
+      CTX.fillStyle='#080808';CTX.strokeStyle=b.id==='tx'?'#00FF41':'#00FFFF';CTX.lineWidth=3;
+      CTX.beginPath();CTX.roundRect(b.x,b.y,b.w,b.h,8);CTX.fill();CTX.stroke();
+      CTX.font=F(Math.min(W*.038,38),900);CTX.fillStyle=b.id==='tx'?'#00FF41':'#00FFFF';
+      CTX.fillText(b.label,b.x+b.w/2,b.y+b.h*.42);
+      CTX.font=FM(Math.min(W*.016,13));CTX.fillStyle='#FFE600';
+      CTX.fillText(b.sub,b.x+b.w/2,b.y+b.h*.73);
+    });
+
+    CTX.font=FM(Math.min(W*.017,14));CTX.fillStyle='#FFE600';
+    CTX.fillText('T = TX  ·  R = RX  ·  ESC = torna alla registrazione',W/2,H*.66);
+    if(typewriterChoiceMsg){
+      CTX.font=FM(Math.min(W*.018,15));CTX.fillStyle='#FF2D2D';
+      CTX.fillText(typewriterChoiceMsg,W/2,H*.73);
+    }
+  },function(ch){
+    ch=String(ch||'').toUpperCase();
+    if(ch==='ESCAPE'){setScreen(null,null);openReg();return;}
+    if(ch==='T')launchTypewriterMode('tx');
+    if(ch==='R')launchTypewriterMode('rx');
+  });
+}
+
+function hitTypewriterChoice(x,y){
+  for(var i=0;i<typewriterChoiceButtons.length;i++){
+    var b=typewriterChoiceButtons[i];
+    if(x>=b.x&&x<=b.x+b.w&&y>=b.y&&y<=b.y+b.h)return b.id;
+  }
+  return null;
+}
+
+document.addEventListener('pointerdown',function(e){
+  if(currentScreen!=='typewriter-choice')return;
+  var id=hitTypewriterChoice(e.clientX,e.clientY);
+  if(id){e.preventDefault();launchTypewriterMode(id);}
+});
+
+async function launchTypewriterMode(mode){
+  if(mode==='tx'){
+    typewriterChoiceMsg='CONNETTO IL KEYER...';
+    drawTypewriterChoice();
+    var ok=await connectSerial();
+    if(!ok){
+      typewriterChoiceMsg='KEYER NON CONNESSO: riprova TX o usa RX';
+      drawTypewriterChoice();
+      return;
+    }
+  }
+  typewriterChoiceMsg='';
+  startTypewriter(mode);
+}
+
+function startTypewriter(mode){
+  mode=(mode||'rx').toLowerCase();
+  typewriterMode=mode;
   if(AC.state==='suspended')AC.resume();
   var reg=document.getElementById('reg');
   if(reg)reg.classList.remove('show');
@@ -1223,15 +1316,20 @@ function startTypewriter(){
   var lines=[''];
   var maxLines=10;
   var cursor=true;
-  setInterval(function(){ if(currentScreen==='typewriter') cursor=!cursor; }, 450);
+  if(window._typewriterCursorTimer)clearInterval(window._typewriterCursorTimer);
+  window._typewriterCursorTimer=setInterval(function(){ if(currentScreen==='typewriter') cursor=!cursor; }, 450);
 
-  function addChar(ch){
+  function addChar(ch,src){
     if(!ch)return;
     if(ch==='Escape'){
       setScreen(null,null);
       openReg();
       return;
     }
+
+    // In TX si scrive solo dal keyer seriale: la tastiera serve solo per ESC.
+    if(typewriterMode==='tx' && src!=='serial')return;
+
     if(ch==='Backspace'){
       lines[lines.length-1]=lines[lines.length-1].slice(0,-1);
       sndBeep();
@@ -1261,14 +1359,15 @@ function startTypewriter(){
     cls();
     CTX.textAlign='center';CTX.textBaseline='middle';
     CTX.font=F(Math.min(W*.052,50),900);CTX.fillStyle='#FFE600';CTX.shadowColor='rgba(255,230,0,.45)';CTX.shadowBlur=24;
-    CTX.fillText('MACCHINA DA SCRIVERE',W/2,H*.12);CTX.shadowBlur=0;
+    CTX.fillText('MACCHINA DA SCRIVERE '+typewriterMode.toUpperCase(),W/2,H*.12);CTX.shadowBlur=0;
     CTX.font=FM(Math.min(W*.018,15));CTX.fillStyle='#00FFFF';
-    CTX.fillText('scrivi sulla tastiera: ogni lettera suona in Morse',W/2,H*.19);
+    if(typewriterMode==='tx')CTX.fillText('scrivi col keyer seriale: i caratteri ricevuti compaiono qui',W/2,H*.19);
+    else CTX.fillText('scrivi sulla tastiera: ogni lettera suona in Morse',W/2,H*.19);
     CTX.fillStyle='#FFE600';
     CTX.fillText('ESC per tornare alla registrazione',W/2,H*.235);
 
     var boxW=Math.min(W*.82,880),boxH=Math.min(H*.55,430),boxX=W/2-boxW/2,boxY=H*.31;
-    CTX.fillStyle='#050505';CTX.strokeStyle='#FFE600';CTX.lineWidth=2;
+    CTX.fillStyle='#050505';CTX.strokeStyle=typewriterMode==='tx'?'#00FF41':'#00FFFF';CTX.lineWidth=2;
     CTX.beginPath();CTX.roundRect(boxX,boxY,boxW,boxH,8);CTX.fill();CTX.stroke();
     CTX.textAlign='left';CTX.textBaseline='top';
     CTX.font=FM(Math.min(W*.032,28));CTX.fillStyle='#00FF41';
@@ -1278,13 +1377,14 @@ function startTypewriter(){
       if(i===lines.slice(-maxLines).length-1 && cursor) shown += '_';
       CTX.fillText(shown,x,y+i*lh);
     });
-  },function(ch){addChar(ch);});
+  },function(ch,src){addChar(ch,src);});
 }
 
 function hookTypewriterLogo(){
   var logos=document.querySelectorAll('.reg-logo');
   logos.forEach(function(logo){
-    logo.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();startTypewriter();});
+    logo.title='Modalità macchina da scrivere: TX/RX';
+    logo.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();drawTypewriterChoice();});
     logo.addEventListener('pointerdown',function(e){e.preventDefault();e.stopPropagation();});
   });
 }
@@ -1296,6 +1396,7 @@ document.addEventListener('keydown',function(e){
   var scr=currentScreen;
   if(document.getElementById('settings').classList.contains('show')){if(e.key==='Escape')closeSettings();return;}
   if(document.getElementById('adm').classList.contains('show')){if(e.key==='Escape'||e.key==='F10')closeAdm();return;}
+  if(scr==='typewriter-choice'){e.preventDefault();if(inputFn)inputFn(e.key,'kbd');return;}
   if(scr==='typewriter'){e.preventDefault();if(inputFn)inputFn(e.key,'kbd');return;}
   if(document.getElementById('reg').classList.contains('show'))return;
   if(e.key==='F10'){e.preventDefault();openAdm();return;}
@@ -1324,7 +1425,8 @@ function showLogin() {
   if (typeof openReg === 'function') openReg();
   else if (typeof doLoginShow === 'function') doLoginShow();
 }
-startAttract();
+// startAttract();  // disattivato: non parte più da sola
+showLogin();
 
 // ══ CONNECTION STATUS (kiosk) ══
 function updConn() {
