@@ -1200,6 +1200,56 @@ var DB={
   }
 };
 
+// ══ CLOUD SCORES CACHE ══
+var cloudScores = [];   // classifica da Google Sheet
+var cloudLoaded = false;
+
+function loadCloudScores(cb){
+  if(!navigator.onLine){ if(cb)cb(); return; }
+  fetch(SHEET,{method:'GET',mode:'cors',signal:AbortSignal.timeout(4000)})
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(Array.isArray(d)){
+        cloudScores = d;
+        cloudLoaded = true;
+      }
+      if(cb)cb();
+    })
+    .catch(function(){ if(cb)cb(); });
+}
+
+// Unisce classifica cloud + punteggi locali di questa sessione
+function mergedScores(){
+  var local = DB.all();
+  if(!cloudScores.length) return local;
+  // Mappa per player: parti dal cloud, aggiungi/aggiorna coi locali
+  var map = {};
+  cloudScores.forEach(function(s){
+    map[s.player] = {
+      player: s.player,
+      email: s.email||'',
+      insta: s.insta||'',
+      total: Number(s.total)||0,
+      tx: Number(s.tx)||0, rx: Number(s.rx)||0,
+      inv: Number(s.inv)||0, echo: Number(s.echo)||0
+    };
+  });
+  // I punteggi locali di questa sessione si sommano (sono nuovi invii)
+  local.forEach(function(s){
+    if(map[s.player]){
+      // somma i nuovi punti locali al totale cloud
+      map[s.player].total += s.total;
+      map[s.player].tx += s.tx; map[s.player].rx += s.rx;
+      map[s.player].inv += s.inv; map[s.player].echo += s.echo;
+    } else {
+      map[s.player] = s;
+    }
+  });
+  return Object.keys(map).map(function(p){return map[p];})
+    .sort(function(a,b){return b.total-a.total;});
+}
+
+
 // ══ SERIAL ══
 var serialPort=null;
 var inputFn=null;
@@ -1626,13 +1676,11 @@ function startEcho(){
 
 // ══ LEADERBOARD ══
 function drawBoard(){
-  var scores=DB.all(),fromSheet=false;
-  if(navigator.onLine)setTimeout(function(){
-    fetch(SHEET,{method:'GET',mode:'cors',signal:AbortSignal.timeout(3000)})
-      .then(function(r){return r.json();})
-      .then(function(d){if(Array.isArray(d)&&d.length){scores=d;fromSheet=true;};})
-      .catch(function(){});
-  },100);
+  var scores=mergedScores(),fromSheet=cloudLoaded;
+  // ricarica in background e ridisegna
+  if(navigator.onLine)loadCloudScores(function(){
+    scores=mergedScores();fromSheet=cloudLoaded;
+  });
   setScreen(function(){
     cls();
     var rowH=Math.min(H*.055,38),colW=Math.min(W*.7,620),cols=[.04,.28,.44,.56,.68,.8],ox=(W-colW)/2,startY=H*.22;
@@ -1714,7 +1762,7 @@ function showGO(title, scoreNum, game, detail){
 function renderGoBoard(game){
   var el = document.getElementById('go-board');
   if(!el) return;
-  var scores = DB.all().slice(0,8);
+  var scores = mergedScores().slice(0,8);
   var html = '<div class="go-board-title">TOP CLASSIFICA</div>';
   if(!scores.length){
     html += '<div style="color:#444;font-size:.8rem;">Nessun punteggio ancora. Sii il primo!</div>';
@@ -1740,6 +1788,8 @@ function saveAndContinue(){
     } else { curEmail=''; curInsta=''; }
     if(pendingScore && pendingScore.game){
       DB.save(pendingScore.game, curPlayer, pendingScore.score);
+      // ricarica classifica cloud dopo breve attesa (tempo che il Sheet registri)
+      setTimeout(function(){ loadCloudScores(); }, 1500);
     }
   }
   pendingScore = null;
@@ -1799,6 +1849,7 @@ if(!('serial' in navigator)){
 // Giocatore anonimo finché non inserisce il nome nel game over
 curPlayer = 'GIOCATORE';
 curEmail = ''; curInsta = ''; photoConsent = true;
+loadCloudScores();  // carica classifica da Google all'avvio
 goScreen('menu');
 
 </script>
