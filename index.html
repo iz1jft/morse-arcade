@@ -1836,7 +1836,7 @@ document.addEventListener('keydown',function(e){
   if(scr==='rx'){if(e.key==='Escape'){setScreen(null,null);goScreen('menu');return;}if(e.key===' '||e.key==='/'){if(inputFn)inputFn('/','kbd');return;}if(e.key.length===1&&/[a-zA-Z]/.test(e.key)&&inputFn)inputFn(e.key.toUpperCase(),'kbd');return;}
   if(scr==='invaders'){if(e.key==='Escape'){setScreen(null,null);goScreen('menu');return;}if(e.key.length===1&&/[a-zA-Z]/.test(e.key)&&inputFn)inputFn(e.key.toUpperCase(),'kbd');return;}
   if(scr==='echo'){if(e.key==='Escape'){setScreen(null,null);goScreen('menu');return;}if(e.key.length===1&&/[a-zA-Z]/.test(e.key)&&inputFn)inputFn(e.key.toUpperCase(),'kbd');return;}
-  if(scr==='board'||scr==='gameover'){return;}
+  if(scr==='board'){if(e.key==='Escape'||e.key==='Enter'||e.key===' '){setScreen(null,null);goScreen('menu');return;}return;}
 });
 
 // ══ WEB SERIAL CHECK ══
