@@ -137,7 +137,7 @@ body.no-photo .no-photo-banner { display: block; }
   z-index:-1;
 }
 #reg::after{
-  content:"CQ CQ CQ  ·  MORSE ARCADE  ·  COMICS 2026  ·  IZ1JFT  ·  COMICS 2026";
+  content:"CQ CQ CQ  ·  MORSE ARCADE  ·  NEDR* 2026  ·  IZ1JFT  ·  NEDR* 2026";
   position:fixed;
   left:50%;
   bottom:18px;
@@ -650,6 +650,7 @@ body.no-photo .reg-shell{
   <button class="fbtn grey" onclick="closeAdm()">CHIUDI &mdash; F10</button>
 </div>
 
+<div id="sync-st" role="status" style="position:fixed;bottom:52px;left:12px;z-index:100;color:#FFE600;font:12px monospace">ARCHIVIO LOCALE</div>
 <button id="gear" title="Impostazioni" onclick="openSettings()">&#9881;</button>
 <div id="serial-st">&#11044; KEYER: NON CONNESSO</div>
 
@@ -834,7 +835,7 @@ const ATTRACT = (function() {
     CTX.textAlign = 'center';
     CTX.textBaseline = 'middle';
     CTX.fillStyle = '#003a00';
-    CTX.fillText('COMICS 2026 · MORSE ARCADE · IZ1JFT', W/2, 28);
+    CTX.fillText('NEDR* 2026 · MORSE ARCADE · IZ1JFT', W/2, 28);
 
     // Area testo
     var areaX = 40;
@@ -931,7 +932,7 @@ const ATTRACT = (function() {
     CTX.fillText('F8 = CONNETTI KEYER', 20, H - 8);
 
     CTX.textAlign = 'right';
-    CTX.fillText('MORSE ARCADE · COMICS 2026 · IZ1JFT', W - 20, H - 8);
+    CTX.fillText('MORSE ARCADE · NEDR* 2026 · IZ1JFT', W - 20, H - 8);
   }
 
   return {
@@ -1204,23 +1205,102 @@ function playLetter(letter,cb){
 function testVVV(){if(AC.state==='suspended')AC.resume();playLetter('V',function(){playLetter('V',function(){playLetter('V');});});}
 function testLetter(l){if(AC.state==='suspended')AC.resume();playLetter(l);}
 
-// ══ STORAGE RAM ══
+// ══ PERSISTENT SCORE OUTBOX ══
+var EVENT_NAME='NEDR* 2026';
+var RECORD_PREFIX='morse-arcade:record:v1:';
 var _R={TX:[],RX:[],INV:[],ECHO:[],emails:{}};
+var cloudRecordIds=new Set();
+var syncBusy=false;
+function syncStatus(message){
+  var el=document.getElementById('sync-st');
+  if(el)el.textContent=message;
+}
+function storedRecords(){
+  var records=[];
+  for(var i=0;i<localStorage.length;i++){
+    var key=localStorage.key(i);
+    if(key && key.indexOf(RECORD_PREFIX)===0)records.push(JSON.parse(localStorage.getItem(key)));
+  }
+  return records;
+}
+function addLocalRecord(r){
+  _R[r.game].push(r);
+  if(r.email)_R.emails[r.player]=r.email;
+}
+try{storedRecords().forEach(addLocalRecord);}catch(e){syncStatus('ERRORE ARCHIVIO LOCALE: salvataggio da verificare');}
+function scoreId(){
+  var bytes=new Uint8Array(16);crypto.getRandomValues(bytes);
+  return Array.from(bytes,function(b){return b.toString(16).padStart(2,'0');}).join('');
+}
+async function readCloudSnapshot(){
+  var response=await fetch(SHEET,{method:'GET',mode:'cors',cache:'no-store',signal:AbortSignal.timeout(10000)});
+  if(!response.ok)throw new Error('Cloud non disponibile');
+  var data=await response.json();
+  // Never send retries to the old, non-idempotent backend.
+  if(data.protocol!=='morse-arcade-v1' || !Array.isArray(data.ids) || !Array.isArray(data.scores)){
+    throw new Error('BACKEND DA AGGIORNARE');
+  }
+  cloudScores=data.scores;cloudLoaded=true;cloudRecordIds=new Set(data.ids);
+  storedRecords().forEach(function(r){
+    if(!r.synced && cloudRecordIds.has(r.id)){
+      r.synced=true;localStorage.setItem(RECORD_PREFIX+r.id,JSON.stringify(r));
+      _R[r.game].forEach(function(local){if(local.id===r.id)local.synced=true;});
+    }
+  });
+}
+async function syncScores(){
+  if(syncBusy)return;
+  if(!navigator.onLine){syncStatus('OFFLINE · punteggi salvati sul dispositivo');return;}
+  syncBusy=true;
+  try{
+    await readCloudSnapshot();
+    var pending=storedRecords().filter(function(r){return !r.synced;});
+    for(var i=0;i<pending.length;i++){
+      var payload=Object.assign({},pending[i]);delete payload.synced;
+      // A simple POST avoids a CORS preflight. An opaque response is NOT an ACK.
+      await fetch(SHEET,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body:JSON.stringify(payload),signal:AbortSignal.timeout(10000)});
+    }
+    if(pending.length)await readCloudSnapshot();
+    var remaining=storedRecords().filter(function(r){return !r.synced;}).length;
+    syncStatus(remaining ? remaining+' punteggi in attesa di conferma' : 'PUNTEGGI SINCRONIZZATI');
+  }catch(e){syncStatus(e.message==='BACKEND DA AGGIORNARE' ? 'SALVATO IN LOCALE · backend da aggiornare' : 'SALVATO IN LOCALE · sincronizzazione da ritentare');}
+  finally{syncBusy=false;}
+}
+window.addEventListener('online',syncScores);
+window.addEventListener('offline',function(){syncStatus('OFFLINE · punteggi salvati sul dispositivo');});
+window.addEventListener('storage',function(e){
+  if(e.key && e.key.indexOf(RECORD_PREFIX)===0 && e.newValue){
+    var r=JSON.parse(e.newValue);
+    var existing=_R[r.game].find(function(old){return old.id===r.id;});
+    if(existing)existing.synced=r.synced;else addLocalRecord(r);
+  }
+});
+setInterval(syncScores,30000);
+setTimeout(syncScores,0);
 var curPlayer='',curEmail='';
 var pendingScore=null;
 var DB={
   save:function(game,player,score){
-    _R[game].push({player:player,score:score,ts:Date.now()});
-    if(curEmail)_R.emails[player]=curEmail;
-    if(navigator.onLine)setTimeout(function(){
-      fetch(SHEET,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({ts:Date.now(),player:player,email:curEmail||'',insta:curInsta||'',photo:photoConsent,game:game,score:score})}).catch(function(){});
-    },50);
+    var ts=Date.now(),record;
+    try{
+      record={id:scoreId(),ts:ts,createdAt:new Date(ts).toISOString(),event:EVENT_NAME,
+        player:player,email:curEmail||'',insta:curInsta||'',photo:photoConsent,game:game,score:score,synced:false};
+      localStorage.setItem(RECORD_PREFIX+record.id,JSON.stringify(record));
+    }catch(e){
+      syncStatus('ERRORE: punteggio NON salvato');
+      alert('Impossibile salvare sul dispositivo. Libera spazio o abilita lo storage e riprova: il risultato resta aperto.');
+      return false;
+    }
+    addLocalRecord(record);
+    syncStatus('SALVATO IN LOCALE · in attesa di sincronizzazione');
+    syncScores();
+    return true;
   },
-  all:function(){
+  all:function(excludeCloud){
     var T={},G={TX:{},RX:{},INV:{},ECHO:{}};
     ['TX','RX','INV','ECHO'].forEach(function(g){
-      _R[g].forEach(function(r){G[g][r.player]=(G[g][r.player]||0)+r.score;T[r.player]=(T[r.player]||0)+r.score;});
+      _R[g].forEach(function(r){if(excludeCloud && cloudRecordIds.has(r.id))return;G[g][r.player]=(G[g][r.player]||0)+r.score;T[r.player]=(T[r.player]||0)+r.score;});
     });
     return Object.keys(T).map(function(p){return{player:p,email:_R.emails[p]||'',total:T[p],tx:G.TX[p]||0,rx:G.RX[p]||0,inv:G.INV[p]||0,echo:G.ECHO[p]||0};
     }).sort(function(a,b){return b.total-a.total;});
@@ -1244,22 +1324,12 @@ var cloudScores = [];   // classifica da Google Sheet
 var cloudLoaded = false;
 
 function loadCloudScores(cb){
-  if(!navigator.onLine){ if(cb)cb(); return; }
-  fetch(SHEET,{method:'GET',mode:'cors',signal:AbortSignal.timeout(4000)})
-    .then(function(r){return r.json();})
-    .then(function(d){
-      if(Array.isArray(d)){
-        cloudScores = d;
-        cloudLoaded = true;
-      }
-      if(cb)cb();
-    })
-    .catch(function(){ if(cb)cb(); });
+  syncScores().finally(function(){if(cb)cb();});
 }
 
-// Unisce classifica cloud + punteggi locali di questa sessione
+// Unisce lo snapshot cloud con i record locali non inclusi nello snapshot
 function mergedScores(){
-  var local = DB.all();
+  var local = DB.all(true);
   if(!cloudScores.length) return local;
   // Mappa per player: parti dal cloud, aggiungi/aggiorna coi locali
   var map = {};
@@ -1273,7 +1343,7 @@ function mergedScores(){
       inv: Number(s.inv)||0, echo: Number(s.echo)||0
     };
   });
-  // I punteggi locali di questa sessione si sommano (sono nuovi invii)
+  // Somma solo i record il cui ID non compare nello snapshot cloud
   local.forEach(function(s){
     if(map[s.player]){
       // somma i nuovi punti locali al totale cloud
@@ -1412,7 +1482,7 @@ function openAdm(){
   document.getElementById('adm').classList.add('show');
 }
 function closeAdm(){document.getElementById('adm').classList.remove('show');}
-function admReset(){if(!confirm('Azzera tutti i punteggi?'))return;_R.TX=[];_R.RX=[];_R.INV=[];_R.ECHO=[];_R.emails={};openAdm();}
+function admReset(){if(!confirm('Azzera solo la vista locale di questa sessione? Archivio persistente, coda e Google Sheet restano invariati.'))return;_R.TX=[];_R.RX=[];_R.INV=[];_R.ECHO=[];_R.emails={};openAdm();}
 
 // ══ ROUTER ══
 function goScreen(name){
@@ -1460,7 +1530,7 @@ function drawMenu(){
     CTX.font=F(titleSz);CTX.shadowColor='rgba(0,255,255,.4)';CTX.shadowBlur=30;CTX.fillStyle='#00FFFF';
     CTX.fillText('MORSE ARCADE',W/2,H*.12);CTX.shadowBlur=0;
     CTX.font=FM(Math.min(W*.014,12));CTX.fillStyle='#7a6200';
-    CTX.fillText('COMICS 2026 · COMICS 2026',W/2,H*.12+titleSz*.9);
+    CTX.fillText('NEDR* 2026 · NEDR* 2026',W/2,H*.12+titleSz*.9);
     CTX.font=F(Math.min(W*.02,16),700);CTX.fillStyle='#FFE600';
     CTX.fillText('GIOCATORE: '+curPlayer,W/2,H*.12+titleSz*1.8);
     MENU_ITEMS.forEach(function(item,i){
@@ -1826,7 +1896,7 @@ function saveAndContinue(){
       curInsta = document.getElementById('rinsta').value.trim().toLowerCase();
     } else { curEmail=''; curInsta=''; }
     if(pendingScore && pendingScore.game){
-      DB.save(pendingScore.game, curPlayer, pendingScore.score);
+      if(!DB.save(pendingScore.game, curPlayer, pendingScore.score))return;
       // ricarica classifica cloud dopo breve attesa (tempo che il Sheet registri)
       setTimeout(function(){ loadCloudScores(); }, 1500);
     }
