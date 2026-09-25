@@ -905,11 +905,11 @@ const ATTRACT = (function() {
     CTX.fillStyle = blink2 ? '#004400' : '#002200';
     CTX.fillText('— TOCCA LO SCHERMO O PREMI UN TASTO PER ACCEDERE —', W/2, H * 0.96);
 
-    // F9 = keyer
+    // F8 = keyer
     CTX.font = infoSz + 'px "Share Tech Mono",monospace';
     CTX.fillStyle = '#001500';
     CTX.textAlign = 'left';
-    CTX.fillText('F9 = CONNETTI KEYER', 20, H - 8);
+    CTX.fillText('F8 = CONNETTI KEYER', 20, H - 8);
 
     CTX.textAlign = 'right';
     CTX.fillText('MORSE ARCADE · COMICS 2026 · IZ1JFT', W - 20, H - 8);
@@ -961,8 +961,8 @@ document.getElementById('p-attract').addEventListener('pointerdown', function(e)
 document.addEventListener('keydown', function(e) {
   if (!attractActive) return;
   if (AC && AC.state === 'suspended') AC.resume();
-  // F9 = connetti keyer
-  if (e.key === 'F9') {
+  // F8 = connetti keyer
+  if (e.key === 'F8') {
     connectAttractSerial();
     return;
   }
@@ -1047,6 +1047,45 @@ function mult(){var w=CFG.wpm;return w<10?.5:w<15?1:w<20?1.5:w<25?2:w<30?2.5:3;}
 
 // ══ AUDIO ══
 const AC=new(window.AudioContext||window.webkitAudioContext)();
+// F9 sidetone: share the arcade context and CW settings.
+var sidetoneOsc=null,sidetoneGain=null,sidetoneDown=false;
+function sidetoneOn(){
+  if(sidetoneDown)return;
+  sidetoneDown=true;
+  if(AC.state==='suspended')AC.resume().catch(sidetoneOff);
+  if(!sidetoneOsc){
+    sidetoneOsc=AC.createOscillator();sidetoneGain=AC.createGain();
+    sidetoneOsc.type='sine';sidetoneGain.gain.value=0;
+    sidetoneOsc.connect(sidetoneGain);sidetoneGain.connect(AC.destination);
+    sidetoneOsc.start();
+  }
+  var t=AC.currentTime;
+  sidetoneOsc.frequency.setValueAtTime(CFG.freq,t);
+  sidetoneGain.gain.cancelAndHoldAtTime(t);
+  sidetoneGain.gain.linearRampToValueAtTime(CFG.vol,t+.003);
+}
+function sidetoneOff(){
+  sidetoneDown=false;
+  if(!sidetoneGain)return;
+  var t=AC.currentTime;
+  sidetoneGain.gain.cancelAndHoldAtTime(t);
+  sidetoneGain.gain.linearRampToValueAtTime(0,t+.003);
+}
+document.addEventListener('keydown',function(e){
+  if(e.code!=='F9'&&e.key!=='F9')return;
+  e.preventDefault();e.stopImmediatePropagation();
+  if(!e.repeat)sidetoneOn();
+},true);
+document.addEventListener('keyup',function(e){
+  if(e.code!=='F9'&&e.key!=='F9')return;
+  e.preventDefault();e.stopImmediatePropagation();
+  sidetoneOff();
+},true);
+window.addEventListener('blur',sidetoneOff);
+document.addEventListener('visibilitychange',function(){
+  if(document.hidden)sidetoneOff();
+});
+
 function beepAt(t,dur){
   var o=AC.createOscillator(),g=AC.createGain();
   o.connect(g);g.connect(AC.destination);
