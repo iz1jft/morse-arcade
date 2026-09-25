@@ -670,6 +670,7 @@ body.no-photo .reg-shell{
   <div class="nav-btn" id="nav-dn">&#9660;</div>
 </div>
 
+<script src="arcade-serial.js"></script>
 <script>
 'use strict';
 
@@ -952,7 +953,7 @@ var attractCtx = attractCv.getContext('2d');
 var attractAnimId = null;
 var attractFrame = 0;
 var attractActive = false;
-var attractSerial = null;
+
 
 function attractResize() {
   attractCv.width = window.innerWidth;
@@ -997,37 +998,6 @@ document.addEventListener('keydown', function(e) {
   ATTRACT.onKey(e.key.toUpperCase());
 });
 
-async function connectAttractSerial() {
-  if (!('serial' in navigator)) return;
-  try {
-    attractSerial = await navigator.serial.requestPort();
-    await attractSerial.open({baudRate: 1200, stopBits: 2});
-    var w = attractSerial.writable.getWriter();
-    await w.write(new Uint8Array([0x00, 0x02]));
-    await new Promise(function(r) { setTimeout(r, 120); });
-    await w.write(new Uint8Array([0x0E, 0x40]));
-    w.releaseLock();
-    // Loop lettura
-    (async function() {
-      while (attractSerial && attractSerial.readable) {
-        var sr = attractSerial.readable.getReader();
-        try {
-          while (true) {
-            var res = await sr.read();
-            if (res.done) break;
-            Array.from(res.value).forEach(function(b) {
-              if (!(b & 0x80)) {
-                var ch = String.fromCharCode(b).toUpperCase();
-                if (attractActive) ATTRACT.onKey(ch);
-                else if (inputFn) inputFn(ch, 'serial');
-              }
-            });
-          }
-        } catch(e) {} finally { sr.releaseLock(); }
-      }
-    })();
-  } catch(e) {}
-}
 
 window.addEventListener('resize', function() {
   if (attractActive) attractResize();
@@ -1370,57 +1340,7 @@ function mergedScores(){
 }
 
 
-// ══ SERIAL ══
-var serialPort=null;
-var inputFn=null;
-function handleSerial(data) {
-  if (!data) return;
-  Array.from(data).forEach(function(b) {
-    if (!(b & 0x80)) {
-      var ch = String.fromCharCode(b).toUpperCase();
-      if (inputFn) inputFn(ch, 'serial');
-    }
-  });
-}
-async function connectSerial(){
-  if(!('serial' in navigator)){
-    var ns=document.getElementById('serial-st');
-    if(ns){ns.textContent='\u2B24 WEB SERIAL: SOLO CHROME';ns.className='err';}
-    return false;
-  }
-  if(serialPort && serialPort.readable){
-    var ok=document.getElementById('serial-st');
-    if(ok){ok.textContent='\u2B24 KEYER: CONNESSO';ok.className='ok';}
-    return true;
-  }
-  try{
-    serialPort=await navigator.serial.requestPort();
-    await serialPort.open({baudRate:1200,stopBits:2});
-    var w=serialPort.writable.getWriter();
-    await w.write(new Uint8Array([0x00,0x02]));
-    await new Promise(function(r){setTimeout(r,120);});
-    await w.write(new Uint8Array([0x0E,0x40]));
-    w.releaseLock();
-    document.getElementById('serial-st').textContent='\u2B24 KEYER: CONNESSO';
-    document.getElementById('serial-st').className='ok';
-    (async function(){
-      while(serialPort&&serialPort.readable){
-        var sr=serialPort.readable.getReader();
-        try{while(true){var res=await sr.read();if(res.done)break;handleSerial(res.value);}}
-        catch(e){}finally{sr.releaseLock();}
-      }
-    })();
-    return true;
-  }catch(e){
-    var er=document.getElementById('serial-st');
-    if(er){er.textContent='\u2B24 ERRORE SERIALE';er.className='err';}
-    return false;
-  }
-}
-async function sendWpm(w){
-  if(!serialPort||!serialPort.writable)return;
-  try{var wr=serialPort.writable.getWriter();await wr.write(new Uint8Array([0x02,Math.min(99,Math.max(5,w))]));wr.releaseLock();}catch(e){}
-}
+// Serial transport is shared in arcade-serial.js.
 
 // ══ CANVAS ══
 var CV=document.getElementById('main-canvas');
