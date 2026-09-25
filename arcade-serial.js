@@ -73,7 +73,7 @@ async function connectSerial(){
   serialConnecting=true;
   try{
     // Resume in the user gesture, before the port chooser consumes activation.
-    await AC.resume();
+    AC.resume().catch(stopSerialTone);
     serialPort=await navigator.serial.requestPort();
     await serialPort.open({baudRate:1200,dataBits:8,stopBits:2,parity:'none',flowControl:'none'});
     readSerial(serialPort);

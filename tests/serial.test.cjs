@@ -50,3 +50,10 @@ test('both pages load transport before startup and retain F9 audio in same conte
   assert.doesNotMatch(html,/requestPort\(/);
  }
 });
+test('port chooser is not blocked by a suspended audio context',async()=>{
+ const {ctx}=setup();let requested=false;
+ ctx.AC.resume=()=>new Promise(()=>{});
+ ctx.navigator.serial={requestPort:async()=>{requested=true;throw Error('Cancelled');}};
+ assert.equal(await ctx.connectSerial(),false);assert.equal(requested,true);
+ assert.equal(ctx.serialConnecting,false);
+});

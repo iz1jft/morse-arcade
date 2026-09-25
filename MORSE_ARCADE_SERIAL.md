@@ -89,3 +89,22 @@ ritardo. Le risposte binarie diagnostiche non fanno parte della sessione Arcade.
 
 Rollback: usare il firmware precedente e le pagine precedenti, oppure un client
 WinKey normale. Non occorre cancellare EEPROM o modificare le memorie.
+
+## Verifica eseguita il 25 settembre 2026
+
+- Compilazione Nano ATmega328P Old Bootloader, profilo OpenCW MK2: 26.694 byte
+  flash (86%), 882 byte RAM (43%). Caricamento riuscito su COM4.
+- 16 scambi reali: versione 17 hex; nessun evento in modalita normale;
+  enable -> 1E 1F 1D; down -> 1C; down ripetuto -> nessun byte; up -> 1D;
+  disable, host open successivo e host close ripristinano il comportamento normale.
+  Enable a host chiuso non emette byte. Traccia e script ripetibile nella PR firmware,
+  cartella tests (script da eseguire solo a radio scollegata).
+- La traccia del dispositivo reale e stata riprodotta, un byte per lettura,
+  nel parser di produzione: sequenza audio UP/DOWN/UP corretta.
+- Test automatici sito: 6 passati. Pagina verificata nel browser senza errori.
+- Diego ha provato la pagina locale con il Keyer e confermato che audio realtime
+  e lettere funzionano. Il buzzer fisico resta attivo secondo la configurazione
+  del keyer: e indipendente dal sidetone browser, disattivabile dal menu locale.
+- Latenza fisica non misurata con strumentazione; compatibilita con client WinKey
+  terzi non provata in un'applicazione esterna. Verificata la sessione WinKey
+  normale sul dispositivo attraverso i comandi sopra.
