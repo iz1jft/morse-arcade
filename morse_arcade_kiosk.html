@@ -646,6 +646,7 @@ body.no-photo .reg-shell{
 </div>
 
 <div id="sync-st" role="status" style="position:fixed;bottom:52px;left:12px;z-index:100;color:#FFE600;font:12px monospace">ARCHIVIO LOCALE</div>
+<button id="new-player" onclick="newPlayer()" style="position:fixed;top:12px;left:12px;z-index:100;background:#080808;color:#00FFFF;border:1px solid #00FFFF;padding:10px;cursor:pointer">NUOVO GIOCATORE</button>
 <button id="gear" title="Impostazioni" onclick="openSettings()">&#9881;</button>
 <div id="serial-st">&#11044; KEYER: NON CONNESSO</div>
 
@@ -1133,6 +1134,7 @@ var RECORD_PREFIX='morse-arcade:record:v1:';
 var _R={TX:[],RX:[],INV:[],ECHO:[],emails:{}};
 var cloudRecordIds=new Set();
 var syncBusy=false;
+var syncFailures=0,nextSyncAttempt=0;
 function syncStatus(message){
   var el=document.getElementById('sync-st');
   if(el)el.textContent=message;
@@ -1172,7 +1174,7 @@ async function readCloudSnapshot(){
 }
 async function syncScores(){
   if(syncBusy)return;
-  if(!navigator.onLine){syncStatus('OFFLINE · punteggi salvati sul dispositivo');return;}
+  if(!navigator.onLine){syncStatus('OFFLINE · archivio locale disponibile');return;}
   syncBusy=true;
   try{
     await readCloudSnapshot();
@@ -1185,9 +1187,15 @@ async function syncScores(){
     }
     if(pending.length)await readCloudSnapshot();
     var remaining=storedRecords().filter(function(r){return !r.synced;}).length;
-    syncStatus(remaining ? remaining+' punteggi in attesa di conferma' : 'PUNTEGGI SINCRONIZZATI');
-  }catch(e){syncStatus(e.message==='BACKEND DA AGGIORNARE' ? 'SALVATO IN LOCALE · backend da aggiornare' : 'SALVATO IN LOCALE · sincronizzazione da ritentare');}
-  finally{syncBusy=false;}
+    syncFailures=remaining ? syncFailures+1 : 0;
+    syncStatus(remaining ? remaining+' punteggi in attesa di conferma' : 'NESSUN INVIO IN ATTESA');
+  }catch(e){
+    syncFailures++;
+    var waiting=0;
+    try{waiting=storedRecords().filter(function(r){return !r.synced;}).length;}catch(storageError){syncStatus('ERRORE ARCHIVIO LOCALE');return;}
+    syncStatus(waiting ? waiting+' punteggi salvati in locale · '+(e.message==='BACKEND DA AGGIORNARE' ? 'backend da aggiornare' : 'nuovo tentativo automatico') : 'CLASSIFICA CLOUD NON DISPONIBILE · nessun invio in attesa');
+  }
+  finally{syncBusy=false;nextSyncAttempt=Date.now()+Math.min(300000,30000*Math.pow(2,Math.max(0,syncFailures-1)));}
 }
 window.addEventListener('online',syncScores);
 window.addEventListener('offline',function(){syncStatus('OFFLINE · punteggi salvati sul dispositivo');});
@@ -1198,8 +1206,11 @@ window.addEventListener('storage',function(e){
     if(existing)existing.synced=r.synced;else addLocalRecord(r);
   }
 });
-setInterval(syncScores,30000);
-setTimeout(syncScores,0);
+setInterval(function(){
+  if(syncBusy || Date.now()<nextSyncAttempt || !navigator.onLine)return;
+  try{if(storedRecords().some(function(r){return !r.synced;}))syncScores();}
+  catch(e){syncStatus('ERRORE ARCHIVIO LOCALE');}
+},30000);
 var curPlayer='',curEmail='';
 var pendingScore=null;
 var DB={
@@ -1408,6 +1419,7 @@ function admReset(){if(!confirm('Azzera solo la vista locale di questa sessione?
 
 // ══ ROUTER ══
 function goScreen(name){
+  document.getElementById('new-player').style.display=name==='menu' ? 'block' : 'none';
   currentScreen=name;closeSettings();
   mobShowInput(false);mobShowNav(false);
   switch(name){
@@ -1436,6 +1448,12 @@ var MENU_ITEMS=[
 ];
 var menuIdx=0;
 function menuNav(d){menuIdx=(menuIdx+d+MENU_ITEMS.length)%MENU_ITEMS.length;sndBeep();}
+function newPlayer(){
+  var name=window.prompt('Nome o nominativo del nuovo giocatore:','');
+  if(name===null || !name.trim())return;
+  curPlayer=name.trim().slice(0,24).toUpperCase();
+  curEmail='';curInsta='';consentGiven=false;photoConsent=false;
+}
 function menuExec(){
   var id=MENU_ITEMS[menuIdx].id;
   if(id==='serial')connectSerial();
@@ -1760,6 +1778,7 @@ function showGO(title, scoreNum, game, detail){
   scoreNum = scoreNum || 0;
   game = game || '';
   pendingScore = { game: game, score: scoreNum };
+  document.getElementById('new-player').style.display='none';
   currentScreen = 'gameover';
   setScreen(null, null);
 
@@ -1779,7 +1798,7 @@ function showGO(title, scoreNum, game, detail){
   renderGoBoard(game);
 
   // Reset campi form
-  document.getElementById('rname').value='';
+  document.getElementById('rname').value=curPlayer==='GIOCATORE' ? '' : curPlayer;
   document.getElementById('remail').value='';
   if(document.getElementById('rinsta'))document.getElementById('rinsta').value='';
   consentGiven=false; photoConsent=false;
@@ -1819,8 +1838,7 @@ function saveAndContinue(){
     } else { curEmail=''; curInsta=''; }
     if(pendingScore && pendingScore.game){
       if(!DB.save(pendingScore.game, curPlayer, pendingScore.score))return;
-      // ricarica classifica cloud dopo breve attesa (tempo che il Sheet registri)
-      setTimeout(function(){ loadCloudScores(); }, 1500);
+      // DB.save avvia gia invio e verifica della conferma.
     }
   }
   pendingScore = null;
